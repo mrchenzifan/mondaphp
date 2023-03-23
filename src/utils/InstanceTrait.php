@@ -17,7 +17,7 @@ trait InstanceTrait
         if (! $refresh && isset(static::$_instances[$key]) && static::$_instances[$key] instanceof static) {
             return static::$_instances[$key];
         }
-        $client = new static();
+        $client = new static;
         $client->instanceKey = $key;
 
         return static::$_instances[$key] = $client;

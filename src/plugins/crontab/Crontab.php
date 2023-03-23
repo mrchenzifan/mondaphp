@@ -131,7 +131,7 @@ class Crontab
         static $inited = false;
         if (! $inited) {
             $inited = true;
-            $parser = new Parser();
+            $parser = new Parser;
             $callback = function () use ($parser, &$callback) {
                 foreach (static::$_instances as $crontab) {
                     $rule = $crontab->getRule();

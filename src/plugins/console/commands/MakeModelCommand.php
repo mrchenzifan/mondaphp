@@ -66,7 +66,7 @@ class MakeModelCommand extends Command
             return self::FAILURE;
         }
         // connect db
-        $capsule = new Manager();
+        $capsule = new Manager;
         foreach (static::$dbConfig as $k => $v) {
             $capsule->addConnection($v, $k);
         }

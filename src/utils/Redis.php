@@ -209,7 +209,7 @@ class Redis
         } else {
             $redisConfig = GF::config('redis', []);
         }
-        $this->_redis = new \Redis();
+        $this->_redis = new \Redis;
         $result = $this->_redis->connect(
             $redisConfig['host'],
             (int) $redisConfig['port'],

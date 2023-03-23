@@ -6,7 +6,7 @@
         "php framework",
         "herosphp",
         "lightweight",
-        "workerMan"
+        "WorkerMan"
     ],
     "license": "MIT",
     "require": {

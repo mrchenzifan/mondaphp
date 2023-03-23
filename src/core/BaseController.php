@@ -30,7 +30,7 @@ abstract class BaseController
 
     public function __init(): void
     {
-        $this->template = new Template();
+        $this->template = new Template;
     }
 
     // assign vars to template

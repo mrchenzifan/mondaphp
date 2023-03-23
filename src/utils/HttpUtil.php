@@ -38,7 +38,7 @@ class HttpUtil
 
     public static function init(): self
     {
-        return new static();
+        return new static;
     }
 
     public function headers(array $headers): self

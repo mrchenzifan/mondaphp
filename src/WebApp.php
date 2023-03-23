@@ -164,7 +164,7 @@ class WebApp
                         if (static::notModifiedSince($file)) {
                             $connection->send((new HttpResponse(304)));
                         } else {
-                            $connection->send((new HttpResponse())->withFile($file));
+                            $connection->send((new HttpResponse)->withFile($file));
                         }
                     }
                     break;
@@ -228,7 +228,7 @@ class WebApp
                 $params[] = match ($parameter->getType()?->getName()) {
                     HttpRequest::class => static::$request,
                     TcpConnection::class => static::$connection,
-                    HttpResponse::class => new HttpResponse(),
+                    HttpResponse::class => new HttpResponse,
                     Http\Session::class => static::$request->session(),
                     default => null,
                 };

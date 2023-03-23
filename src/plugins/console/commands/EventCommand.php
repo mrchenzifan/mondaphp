@@ -21,7 +21,7 @@ class EventCommand extends Command
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $table = new Table();
+        $table = new Table;
         $table->setCellStyle(Table::COLOR_GREEN);
         foreach (Event::list() as $id => $item) {
             $eventName = $item[0];

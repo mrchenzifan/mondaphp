@@ -82,7 +82,7 @@ class ValidateRule
 
     public static function __callStatic($method, $args)
     {
-        $rule = new static();
+        $rule = new static;
         if ('is' == strtolower(substr($method, 0, 2))) {
             $method = substr($method, 2);
         }

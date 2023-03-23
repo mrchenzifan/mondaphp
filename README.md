@@ -2,24 +2,24 @@
 
 项目愿景
 ====
-打造一个真正简单使用与超高性能的共存的完美框架，真正为`PHP`敏捷开发的框架，此为 `Heros-Worker` 及其团队成员的初衷，我们将持续投入并为此付出努力，也欢迎你加入我们参与开源建设。
+打造一个真正简单使用与超高性能的共存的完美框架，真正为`PHP`敏捷开发的框架，此为 `mondaphp/framework` 及其团队成员的初衷，我们将持续投入并为此付出努力，也欢迎你加入我们参与开源建设。
 
 
 为什么要造这个轮子？
 ====
 
-"PHP是世界上最好的变成语言",这句话虽然是一个梗,但是他却代表了php这门语言在编程语言中的江湖地位。那既然她是最好的语言，那么免不了就会出现各种各样的框架啦，包括php官方的`zendFrame`, `Laravel`,`Yii`,包括国产的`thinkPHP`,`ci`等框架。那既然有这么多框架，为什么我们还要造这个轮子呢。原因有以下几点：
+"PHP是世界上最好的变成语言",这句话虽然是一个梗,但是他却代表了php这门语言在编程语言中的江湖地位。那既然她是最好的语言，那么免不了就会出现各种各样的框架啦，包括php官方的`ZendFrame`, `Laravel`,`Yii`,包括国产的`thinkPHP`,`ci`等框架。那既然有这么多框架，为什么我们还要造这个轮子呢。原因有以下几点：
 
-1. 目前开源的php框架总有这样或者那样的不符合公司项目要求的，使着不顺手，要么就过于重量级，像`Laravel`,`zendFrame`,`thinkPHP`那样太过于臃肿，学习成本太高，要么就是扩展性和或性能达不到要求，使用起来也很不方便。
+1. 目前开源的php框架总有这样或者那样的不符合公司项目要求的，使着不顺手，要么就过于重量级，像`Laravel`,`ZendFrame`,`ThinkPHP`那样太过于臃肿，学习成本太高，要么就是扩展性和或性能达不到要求，使用起来也很不方便。
 2. 想把自己学习到的php编程知识做下沉淀，那最好的方法莫过于写php开发框架了。
 3. 目前的开源框架都是为了兼容高中低端各种用户而牺牲了框架本身的性能和特性，这显然没有办法完全满足公司的全部需求，而修改像thinkPHP这种大型框架是一件很痛苦的事情，跟自己开发的成本差不多。这估计也是很多大点的公司都有自己的框架的原因了。
 
 ------------------
 
-monda/php-framework的设计思想
+设计思想
 ====
 
-`Heros-Worker`是一套`web`应用开发框架，我们觉得好开发框架应该是<strong>方便，快捷，优雅，干净</strong>的，这也是我们一直在用心做的事情。我们希望框架既能封装良好，是开发者使用方便，但又不损失框架性能，既能快速搭建系统又能保持良好的扩展性。
+`mondaphp/framework`是一套`web`应用开发框架，我们觉得好开发框架应该是<strong>方便，快捷，优雅，干净</strong>的，这也是我们一直在用心做的事情。我们希望框架既能封装良好，是开发者使用方便，但又不损失框架性能，既能快速搭建系统又能保持良好的扩展性。
 
 > 作为一群有逼格的码农，我们目标是开发能够应对<code class="scode">千万级pv</code>的系统框架，并且能够支持多应用,长连接,任务调度,消息队列等。
 
@@ -27,9 +27,9 @@ monda/php-framework的设计思想
 
 我们始终坚持<strong>一个问题只保留一种你能够实现的最优解决方案即可</strong>，所以我们屏蔽了一些不规范的编码习惯，比如说路由定义几乎所有的框架都支持路由文件或者通过文件路径作为路由，但是在`Heros-Worker`中，对不起，你只能使用我们提供的通过注解的方式编写路由，这样的设计是第一是为了使代码可读性更高，调理清晰。二是框架采用了`illuminate/database`优秀的数据库`ORM`,使得代码更健壮。当然这个见仁见智，认同点赞，不喜勿喷。
 
-像其他框架一样，我们也会提供`annotation`,`process`,`laravel ORM` ,`middleware`，`aop`，`validate`，`session`,`cache` 等开发过程中常用的工具的功能，跟其他框架不一样的是，我们还提供了类似`springboot`的`@Controller`,`@Inject`,`@Component`注解，这个开发者无需关心性能的问题，在框架启动的时候，已经把`bean`加载到内存中，借鉴java中`springboot`框架的模式实现服务资源的托管。
+像其他框架一样，我们也会提供`annotation`,`laravel ORM` ,`middleware`，`validate`，`session`,`value` 等开发过程中常用的工具的功能，跟其他框架不一样的是，我们还提供了类似`springboot`的`@Controller`,`@Inject`,`@Component`注解，这个开发者无需关心性能的问题，在框架启动的时候，已经把`bean`加载到内存中，借鉴java中`springboot`框架的模式实现服务资源的托管。
 
-monda/php-framework的特性
+特性
 =======
 
 1. 部署简单，高开发效率并且高性能
@@ -41,12 +41,12 @@ monda/php-framework的特性
 GitHub 源码地址
 ====
 
-GitHub: [https://github.com/mondagPHP/heros-worker](https://github.com/mondagPHP/heros-worker)
+GitHub: [https://github.com/mrchenzifan/mondaphp](https://github.com/mrchenzifan/mondaphp)
 
 
 #### 本地调试
 
-如果你想在本地直接调试Heros-Worker框架，不想每次都要更新到`composer`仓库，然后再用`composer update`去composer仓库去更新。（这个过程慢的要死，就算你使用了中国镜像也慢）
+如果你想在本地直接调试框架，不想每次都要更新到`composer`仓库，然后再用`composer update`去composer仓库去更新。（这个过程慢的要死，就算你使用了中国镜像也慢）
 你可以通过任何方式将 Heros-Worker 放入你的本地目录，如/code/php/heros-worker
 然后在你的 app 项目的 composer.json 中加入如下配置
 
@@ -62,5 +62,5 @@ GitHub: [https://github.com/mondagPHP/heros-worker](https://github.com/mondagPHP
 然后在 app 根目录下运行
 
 ```bash
-composer require 'monda/herosphp:*@dev'
+composer require 'mondaphp/framework:*@dev'
 ```

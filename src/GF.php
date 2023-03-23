@@ -153,7 +153,7 @@ class GF
     {
         return array_reduce(array_reverse($classes), function ($res, $currClass) {
             return function ($request) use ($res, $currClass) {
-                return (new $currClass())->process($request, $res);
+                return (new $currClass)->process($request, $res);
             };
         }, $initial);
     }
