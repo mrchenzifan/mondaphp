@@ -11,6 +11,8 @@ use Illuminate\Database\Capsule\Manager as Capsule;
 use Illuminate\Events\Dispatcher;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Str;
+use Throwable;
+use Workerman\Timer;
 
 /**
  * laravelDB启动器
@@ -21,7 +23,19 @@ class LaravelDbStarter
 
     protected static bool $autoPageResolver = false;
 
+    /**
+     * debug sql
+     *
+     * @var bool
+     */
     protected static bool $debug = false;
+
+    /**
+     * 保持长链接
+     *
+     * @var bool
+     */
+    protected static bool $keepAlive = false;
 
     public static function init(): void
     {
@@ -35,6 +49,16 @@ class LaravelDbStarter
         $capsule = new Capsule;
         foreach ($connections as $name => $config) {
             $capsule->addConnection($config, $name);
+
+            // Heartbeat KeepAlive
+            if (static::$keepAlive && $config['driver'] == 'mysql') {
+                Timer::add(55, function () use ($capsule) {
+                    try {
+                        $capsule->getDatabaseManager()->select('select 1');
+                    } catch (Throwable $e) {
+                    }
+                });
+            }
         }
 
         if (\class_exists(Dispatcher::class)) {
