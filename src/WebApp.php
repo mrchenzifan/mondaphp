@@ -30,7 +30,7 @@ use Workerman\Connection\TcpConnection;
 use Workerman\Protocols\Http;
 use Workerman\Worker;
 
-require __DIR__.DIRECTORY_SEPARATOR.'constants.php';
+require __DIR__ . DIRECTORY_SEPARATOR . 'constants.php';
 
 /**
  * WebApp main program
@@ -61,10 +61,10 @@ class WebApp
         'user' => '',
         'group' => '',
         'event_loop' => '',
-        'pid_file' => RUNTIME_PATH.'herosphp.pid',
-        'status_file' => RUNTIME_PATH.'herosphp.status',
-        'stdout_file' => RUNTIME_PATH.'logs/herosphp-stdout.log',
-        'log_file' => RUNTIME_PATH.'logs/herosphp.log',
+        'pid_file' => RUNTIME_PATH . 'herosphp.pid',
+        'status_file' => RUNTIME_PATH . 'herosphp.status',
+        'stdout_file' => RUNTIME_PATH . 'logs/herosphp-stdout.log',
+        'log_file' => RUNTIME_PATH . 'logs/herosphp.log',
         'max_package_size' => 10 * 1024 * 1024,
     ];
 
@@ -159,22 +159,21 @@ class WebApp
                 case Dispatcher::NOT_FOUND:
                     $file = static::getPublicFile($request->path());
                     if ($file === '') {
-                        $connection->send(GF::response(code: 404, body: 'Page not found.'));
+                        static::send(GF::response(code: 404, body: 'Page not found.'));
                     } else {
                         if (static::notModifiedSince($file)) {
-                            $connection->send((new HttpResponse(304)));
+                            static::send((new HttpResponse(304)));
                         } else {
-                            $connection->send((new HttpResponse)->withFile($file));
+                            static::send((new HttpResponse)->withFile($file));
                         }
                     }
                     break;
                 case Dispatcher::METHOD_NOT_ALLOWED:
-                    $connection->send(GF::response(code: 405, body: 'Method not allowed.'));
+                    static::send(GF::response(code: 405, body: 'Method not allowed.'));
                     break;
                 case Dispatcher::FOUND:
                     $handler = $routeInfo[1];
                     $vars = $routeInfo[2];
-
                     // sort middlewares
                     $middlewares = static::sortMiddlewares($handler['obj']);
                     // target class
@@ -188,8 +187,7 @@ class WebApp
 
                         return call_user_func_array([$handler['obj'], $handler['method']], $params);
                     });
-
-                    $connection->send(GF::response(body: $callback($request)));
+                    static::send(GF::response(body: $callback($request)));
                     break;
                 default:
                     throw new RouterException("router parse error for {$request->path()}");
@@ -197,12 +195,33 @@ class WebApp
 
             // catch and handle the exception
         } catch (Throwable $e) {
-            $connection->send(GF::response(body: static::exceptionResponse($e, $request)));
+            static::send(GF::response(body: static::exceptionResponse($e, $request)));
         }
     }
 
+
     /**
-     * @param  array  $pathParams
+     * Send.
+     * @param mixed $response
+     * @return void
+     */
+    protected static function send(mixed $response): void
+    {
+        $request = static::$request;
+        $connection = static::$connection;
+        $keepAlive = $request->header('connection');
+        if (($keepAlive === null && $request->protocolVersion() === '1.1')
+            || $keepAlive === 'keep-alive' || $keepAlive === 'Keep-Alive'
+        ) {
+            $connection->send($response);
+            return;
+        }
+        $connection->close($response);
+    }
+
+
+    /**
+     * @param array $pathParams
      * @return array
      *
      * @throws \ReflectionException
@@ -241,11 +260,11 @@ class WebApp
     // get the path for public static files
     public static function getPublicFile(string $path): string
     {
-        $file = \realpath(PUBLIC_PATH.$path);
-        if (! $file) {
+        $file = \realpath(PUBLIC_PATH . $path);
+        if (!$file) {
             return '';
         }
-        if (! str_starts_with($file, PUBLIC_PATH)) {
+        if (!str_starts_with($file, PUBLIC_PATH)) {
             return '';
         }
         if (false === \is_file($file)) {
@@ -256,17 +275,17 @@ class WebApp
     }
 
     /**
-     * @param  string  $file
+     * @param string $file
      * @return bool
      */
     public static function notModifiedSince(string $file): bool
     {
         $ifModifiedSince = self::$request->header('if-modified-since');
-        if ($ifModifiedSince === null || ! ($mtime = \filemtime($file))) {
+        if ($ifModifiedSince === null || !($mtime = \filemtime($file))) {
             return false;
         }
 
-        return $ifModifiedSince === \gmdate('D, d M Y H:i:s', $mtime).' GMT';
+        return $ifModifiedSince === \gmdate('D, d M Y H:i:s', $mtime) . ' GMT';
     }
 
     /**
@@ -286,8 +305,8 @@ class WebApp
     /**
      * 统一异常处理
      *
-     * @param  Throwable  $e
-     * @param  HttpRequest  $request
+     * @param Throwable $e
+     * @param HttpRequest $request
      * @return HttpResponse
      */
     protected static function exceptionResponse(Throwable $e, HttpRequest $request): mixed

@@ -12,6 +12,7 @@ namespace herosphp\core;
 
 use FastRoute\Dispatcher;
 use FastRoute\RouteCollector;
+use herosphp\annotation\AnnotationParser;
 use function FastRoute\simpleDispatcher;
 
 /**
@@ -36,7 +37,7 @@ class Router
         return simpleDispatcher(function (RouteCollector $r) {
             foreach (static::$_routes as $route) {
                 if (is_array($route['method'])) {
-                    $r->addRoute(['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD', 'PATCH'], $route['uri'], $route['handler']);
+                    $r->addRoute(AnnotationParser::$_httpMethodAny, $route['uri'], $route['handler']);
                 } else {
                     $r->addRoute(strtoupper($route['method']), $route['uri'], $route['handler']);
                 }
