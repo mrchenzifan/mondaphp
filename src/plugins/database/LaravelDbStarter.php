@@ -40,10 +40,10 @@ class LaravelDbStarter
     public static function init(): void
     {
         $connections = GF::config('database', []);
-        if (!$connections) {
+        if (! $connections) {
             return;
         }
-        if (!class_exists(Capsule::class)) {
+        if (! class_exists(Capsule::class)) {
             return;
         }
         $capsule = new Capsule;
@@ -76,7 +76,7 @@ class LaravelDbStarter
                         if (is_numeric($v)) {
                             $bindings[] = $v;
                         } else {
-                            $bindings[] = '"' . strval($v) . '"';
+                            $bindings[] = '"'.strval($v).'"';
                         }
                     }
                 }
@@ -95,14 +95,16 @@ class LaravelDbStarter
             }
             Paginator::currentPathResolver(function () {
                 $request = WebApp::$request;
+
                 return $request ? $request->path() : '/';
             });
             Paginator::currentPageResolver(function ($pageName = 'page') {
                 $request = WebApp::$request;
-                if (!$request) {
+                if (! $request) {
                     return 1;
                 }
-                $page = (int)($request->getParameter($pageName, 1));
+                $page = (int) ($request->getParameter($pageName, 1));
+
                 return $page > 0 ? $page : 1;
             });
         }

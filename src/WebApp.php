@@ -30,7 +30,7 @@ use Workerman\Connection\TcpConnection;
 use Workerman\Protocols\Http;
 use Workerman\Worker;
 
-require __DIR__ . DIRECTORY_SEPARATOR . 'constants.php';
+require __DIR__.DIRECTORY_SEPARATOR.'constants.php';
 
 /**
  * WebApp main program
@@ -61,10 +61,10 @@ class WebApp
         'user' => '',
         'group' => '',
         'event_loop' => '',
-        'pid_file' => RUNTIME_PATH . 'herosphp.pid',
-        'status_file' => RUNTIME_PATH . 'herosphp.status',
-        'stdout_file' => RUNTIME_PATH . 'logs/herosphp-stdout.log',
-        'log_file' => RUNTIME_PATH . 'logs/herosphp.log',
+        'pid_file' => RUNTIME_PATH.'herosphp.pid',
+        'status_file' => RUNTIME_PATH.'herosphp.status',
+        'stdout_file' => RUNTIME_PATH.'logs/herosphp-stdout.log',
+        'log_file' => RUNTIME_PATH.'logs/herosphp.log',
         'max_package_size' => 10 * 1024 * 1024,
     ];
 
@@ -199,10 +199,10 @@ class WebApp
         }
     }
 
-
     /**
      * Send.
-     * @param mixed $response
+     *
+     * @param  mixed  $response
      * @return void
      */
     protected static function send(mixed $response): void
@@ -214,14 +214,14 @@ class WebApp
             || $keepAlive === 'keep-alive' || $keepAlive === 'Keep-Alive'
         ) {
             $connection->send($response);
+
             return;
         }
         $connection->close($response);
     }
 
-
     /**
-     * @param array $pathParams
+     * @param  array  $pathParams
      * @return array
      *
      * @throws \ReflectionException
@@ -260,11 +260,11 @@ class WebApp
     // get the path for public static files
     public static function getPublicFile(string $path): string
     {
-        $file = \realpath(PUBLIC_PATH . $path);
-        if (!$file) {
+        $file = \realpath(PUBLIC_PATH.$path);
+        if (! $file) {
             return '';
         }
-        if (!str_starts_with($file, PUBLIC_PATH)) {
+        if (! str_starts_with($file, PUBLIC_PATH)) {
             return '';
         }
         if (false === \is_file($file)) {
@@ -275,17 +275,17 @@ class WebApp
     }
 
     /**
-     * @param string $file
+     * @param  string  $file
      * @return bool
      */
     public static function notModifiedSince(string $file): bool
     {
         $ifModifiedSince = self::$request->header('if-modified-since');
-        if ($ifModifiedSince === null || !($mtime = \filemtime($file))) {
+        if ($ifModifiedSince === null || ! ($mtime = \filemtime($file))) {
             return false;
         }
 
-        return $ifModifiedSince === \gmdate('D, d M Y H:i:s', $mtime) . ' GMT';
+        return $ifModifiedSince === \gmdate('D, d M Y H:i:s', $mtime).' GMT';
     }
 
     /**
@@ -305,8 +305,8 @@ class WebApp
     /**
      * 统一异常处理
      *
-     * @param Throwable $e
-     * @param HttpRequest $request
+     * @param  Throwable  $e
+     * @param  HttpRequest  $request
      * @return HttpResponse
      */
     protected static function exceptionResponse(Throwable $e, HttpRequest $request): mixed

@@ -10,7 +10,6 @@ declare(strict_types=1);
 namespace herosphp\core;
 
 use herosphp\WebApp;
-use Throwable;
 use Workerman\Protocols\Http\Response;
 
 /**
@@ -40,5 +39,4 @@ class HttpResponse extends Response
 
         return $this;
     }
-
 }

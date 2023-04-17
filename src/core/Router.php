@@ -12,8 +12,8 @@ namespace herosphp\core;
 
 use FastRoute\Dispatcher;
 use FastRoute\RouteCollector;
-use herosphp\annotation\AnnotationParser;
 use function FastRoute\simpleDispatcher;
+use herosphp\annotation\AnnotationParser;
 
 /**
  * Router class

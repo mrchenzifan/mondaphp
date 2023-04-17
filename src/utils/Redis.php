@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace herosphp\utils;
 
 use herosphp\GF;
-use Illuminate\Redis\Connections\Connection;
-use Illuminate\Redis\RedisManager;
+use RuntimeException;
 
 /**
  * Class Redis
@@ -169,7 +168,7 @@ use Illuminate\Redis\RedisManager;
  * @method static mixed watch($keys)
  * @method static mixed unwatch($keys)
  * Scripting methods
- * @method static mixed eval($script, $numkeys, $keyOrArg1 = null, $keyOrArgN = null)
+ * @method mixed eval($script, $numkeys, $keyOrArg1 = null, $keyOrArgN = null)
  * @method static mixed evalSha($scriptSha, $numkeys, ...$arguments)
  * @method static mixed script($command, ...$scripts)
  * @method static mixed client(...$args)
@@ -190,65 +189,75 @@ use Illuminate\Redis\RedisManager;
  */
 class Redis
 {
-    /**
-     * @var RedisManager|null
-     */
-    protected static ?RedisManager $instance = null;
+    protected string $prefix = '';
+
+    //herosphp redis
+    private static self $_instance;
+
+    private \Redis $_redis;
 
     /**
-     * need to install phpredis extension
+     *连接redis
+     *
+     * @throws \RedisException
      */
-    const PHPREDIS_CLIENT = 'phpredis';
-
-    /**
-     * need to install the 'predis/predis' package.
-     * cmd: composer install predis/predis
-     */
-    const PREDIS_CLIENT = 'predis';
-
-    /**
-     * Support client collection
-     */
-    public static array $allowClient = [
-        self::PHPREDIS_CLIENT,
-        self::PREDIS_CLIENT,
-    ];
-
-    /**
-     * @return RedisManager|null
-     */
-    public static function instance(): ?RedisManager
+    private function __construct(array $config = [])
     {
-        if (! static::$instance) {
-            $config = GF::config('redis');
-            $client = $config['client'] ?? self::PHPREDIS_CLIENT;
-            if (! in_array($client, static::$allowClient)) {
-                $client = self::PHPREDIS_CLIENT;
-            }
-            static::$instance = new RedisManager('', $client, $config);
+        if (! extension_loaded('redis')) {
+            throw new RuntimeException('please install redis extension!');
+        }
+        $redisConfig = ! empty($config) ? $config : GF::config('redis', []);
+        $this->_redis = new \Redis;
+        $result = $this->_redis->connect(
+            $redisConfig['host'],
+            (int) $redisConfig['port'],
+            (int) $redisConfig['timeout']
+        );
+        if ($result === false) {
+            throw new RuntimeException('redis connect fail');
+        }
+        if ($redisConfig['auth']) {
+            $this->_redis->auth($redisConfig['auth']);
+        }
+        $this->_redis->select((int) $redisConfig['database']);
+        $this->prefix = $redisConfig['prefix'] ?? '';
+        //统一设置前缀
+        $this->_redis->setOption(\Redis::OPT_PREFIX, $this->prefix);
+    }
+
+    /**
+     * 禁止clone
+     *
+     * @return void
+     */
+    private function __clone()
+    {
+    }
+
+    /**
+     * @param $name
+     * @param $arguments
+     * @return mixed
+     *
+     * @throws \RedisException
+     */
+    public static function __callStatic($name, $arguments)
+    {
+        return self::getInstance()->_redis->{$name}(...$arguments);
+    }
+
+    /**
+     * @param  array  $config
+     * @return Redis
+     *
+     * @throws \RedisException
+     */
+    public static function getInstance(array $config = []): self
+    {
+        if (! isset(self::$_instance)) {
+            self::$_instance = new self($config);
         }
 
-        return static::$instance;
-    }
-
-    /**
-     * Connection.
-     *
-     * @param  string  $name
-     * @return Connection
-     */
-    public static function connection(string $name = 'default'): Connection
-    {
-        return static::instance()->connection($name);
-    }
-
-    /**
-     * @param  string  $name
-     * @param  array  $arguments
-     * @return mixed
-     */
-    public static function __callStatic(string $name, array $arguments)
-    {
-        return static::connection()->{$name}(...$arguments);
+        return self::$_instance;
     }
 }
