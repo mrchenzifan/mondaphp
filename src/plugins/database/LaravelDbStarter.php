@@ -40,10 +40,10 @@ class LaravelDbStarter
     public static function init(): void
     {
         $connections = GF::config('database', []);
-        if (! $connections) {
+        if (!$connections) {
             return;
         }
-        if (! class_exists(Capsule::class)) {
+        if (!class_exists(Capsule::class)) {
             return;
         }
         $capsule = new Capsule;
@@ -76,7 +76,7 @@ class LaravelDbStarter
                         if (is_numeric($v)) {
                             $bindings[] = $v;
                         } else {
-                            $bindings[] = '"'.strval($v).'"';
+                            $bindings[] = '"' . strval($v) . '"';
                         }
                     }
                 }
@@ -87,11 +87,22 @@ class LaravelDbStarter
 
         // auto page resolver
         if (static::$autoPageResolver && class_exists(Paginator::class)) {
-            Paginator::queryStringResolver(fn () => WebApp::$request->queryString());
-            Paginator::currentPathResolver(fn () => WebApp::$request->path());
-            Paginator::currentPageResolver(function () {
-                $page = (int) WebApp::$request->get(static::$pageName, 1);
-
+            // Paginator
+            if (method_exists(Paginator::class, 'queryStringResolver')) {
+                Paginator::queryStringResolver(function () {
+                    return WebApp::$request?->queryString();
+                });
+            }
+            Paginator::currentPathResolver(function () {
+                $request = WebApp::$request;
+                return $request ? $request->path() : '/';
+            });
+            Paginator::currentPageResolver(function ($pageName = 'page') {
+                $request = WebApp::$request;
+                if (!$request) {
+                    return 1;
+                }
+                $page = (int)($request->getParameter($pageName, 1));
                 return $page > 0 ? $page : 1;
             });
         }

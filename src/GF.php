@@ -200,12 +200,10 @@ class GF
     // create a new HttpResponse
     public static function response(int $code = 200, array $headers = [], mixed $body = ''): HttpResponse
     {
-        $headers['X-Powered-By'] = X_POWER;
         if ($body instanceof HttpResponse) {
             return $body;
         }
-
-        // jsonable object
+        // jsonAble object
         if ($body instanceof Jsonable) {
             $headers['Content-Type'] = 'application/json';
             $body = $body->toJson();
@@ -221,7 +219,6 @@ class GF
     public static function redirect(string $url, int $code = 301): HttpResponse
     {
         $headers = [];
-        $headers['X-Powered-By'] = X_POWER;
         $headers['Location'] = $url;
 
         return new HttpResponse($code, $headers);

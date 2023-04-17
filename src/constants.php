@@ -21,4 +21,4 @@ if (! defined('PUBLIC_PATH')) {
 }
 
 // define framework version
-const X_POWER = 'Herosphp/5.0';
+const X_POWER = 'mondaphp/5.0';

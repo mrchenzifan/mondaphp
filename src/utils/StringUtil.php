@@ -55,10 +55,10 @@ class StringUtil
                 $msec
             );
         }
-        throw new HeroException('failed to aquire the lock.');
+        throw new HeroException('failed to acquire the lock.');
     }
 
-    public static function jsonEncode($array)
+    public static function jsonEncode($array): bool|string
     {
         return json_encode($array, JSON_UNESCAPED_UNICODE);
     }
