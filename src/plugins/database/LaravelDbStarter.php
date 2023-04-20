@@ -21,14 +21,14 @@ class LaravelDbStarter
 {
     protected static string $pageName = 'page';
 
-    protected static bool $autoPageResolver = false;
+    protected static bool $autoPageResolver = true;
 
     /**
      * debug sql
      *
      * @var bool
      */
-    protected static bool $debug = false;
+    protected static bool $debug = true;
 
     /**
      * 保持长链接
@@ -55,7 +55,7 @@ class LaravelDbStarter
                 Timer::add(55, function () use ($capsule) {
                     try {
                         $capsule->getDatabaseManager()->select('select 1');
-                    } catch (Throwable $e) {
+                    } catch (Throwable) {
                     }
                 });
             }

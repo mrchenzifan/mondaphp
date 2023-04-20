@@ -76,8 +76,8 @@ class MakeModelCommand extends Command
         static::$name = Util::nameToClass(static::$name);
         $output->writeln('Make model '.static::$name);
         static::$name = ucfirst(static::$name);
-        $file = APP_PATH.'model/'.static::$name.'.php';
-        $namespace = 'app\model';
+        $file = APP_PATH.'entity/'.static::$name.'.php';
+        $namespace = 'app\entity';
         $this->createModel($namespace, $file);
 
         return self::SUCCESS;
@@ -95,23 +95,32 @@ class MakeModelCommand extends Command
         if (! is_dir($path)) {
             mkdir($path, 0777, true);
         }
-        $table = Util::classToName($class);
+        $table = static::$table;
         $table_val = '"'.static::$table.'"';
         $pk = 'id';
         $properties = '';
         $database = static::$dbConfig['default']['database'];
-
+        $incrementingBool = 'true';
+        $fillable_val = '[';
         try {
             foreach (Db::connection('default')->select("select COLUMN_NAME,DATA_TYPE,COLUMN_KEY,COLUMN_COMMENT from INFORMATION_SCHEMA.COLUMNS where table_name = '$table' and table_schema = '$database'") as $item) {
+                $type = $this->getType($item->DATA_TYPE);
                 if ($item->COLUMN_KEY === 'PRI') {
                     $pk = $item->COLUMN_NAME;
                     $item->COLUMN_COMMENT .= '(主键)';
+                    if ($type == 'string') {
+                        $incrementingBool = 'false';
+                    }
                 }
-                $type = $this->getType($item->DATA_TYPE);
                 $properties .= " * @property $type \${$item->COLUMN_NAME} {$item->COLUMN_COMMENT}\n";
+                if (! in_array($item->COLUMN_NAME, ['created_at', 'updated_at'])) {
+                    $fillable_val .= "'{$item->COLUMN_NAME}', ";
+                }
             }
         } catch (\Throwable $e) {
         }
+        $fillable_val = rtrim($fillable_val, ', ');
+        $fillable_val .= ']';
         $properties = rtrim($properties) ?: ' *';
         $model_content = <<<EOF
 <?php
@@ -141,13 +150,25 @@ class $class extends Model
     protected \$primaryKey = '$pk';
 
     /**
+     * Indicates if the IDs are auto-incrementing.
+     *
+     * @var bool
+     */
+    public \$incrementing = $incrementingBool;
+
+    /**
      * Indicates if the model should be timestamped.
      *
      * @var bool
      */
-    public \$timestamps = false;
+    public \$timestamps = true;
 
-
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
+    protected \$fillable = $fillable_val;
 }
 
 EOF;
@@ -162,7 +183,7 @@ EOF;
         }
 
         return match ($type) {
-            'varchar', 'string', 'text', 'date', 'time', 'guid', 'datetimetz', 'datetime', 'decimal', 'enum' => 'string',
+            'char', 'varchar', 'string', 'text', 'date', 'time', 'guid', 'datetimetz', 'datetime', 'decimal', 'enum' => 'string',
             'boolean' => 'integer',
             'float' => 'float',
             default => 'mixed',
