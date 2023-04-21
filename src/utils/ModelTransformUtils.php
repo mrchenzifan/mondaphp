@@ -36,7 +36,7 @@ class ModelTransformUtils
             if ($refClass->hasMethod($methodName)) {
                 $method = $refClass->getMethod($methodName);
                 try {
-                    $method->invoke($obj, $map[$key]);
+                    $method->invoke($obj, $val);
                 } catch (\Exception $e) {
                     throw new HeroException($e->getMessage());
                 }

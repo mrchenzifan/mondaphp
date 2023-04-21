@@ -10,6 +10,7 @@ declare(strict_types=1);
 
 namespace herosphp\utils;
 
+use CurlHandle;
 use herosphp\exception\HeroException;
 
 /**
@@ -21,7 +22,7 @@ use herosphp\exception\HeroException;
 class HttpUtil
 {
     // curl handle
-    private $_handler;
+    private CurlHandle $_handler;
 
     private array $_headers = [];
 
