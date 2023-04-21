@@ -63,4 +63,31 @@ class ModelTransformUtils
 
         return $map;
     }
+
+
+
+    /**
+     * 多维数组过滤value 为 null
+     *
+     * @param  array  $arr
+     * @return array
+     */
+    public static function filterNull(array $arr): array
+    {
+        $resultArr = [];
+        if (count($arr) <= 0) {
+            return [];
+        }
+        foreach ($arr as $k => $item) {
+            $result = $item;
+            if (is_array($result)) {
+                $result = static::filterNull($item);
+            }
+            if (!is_null($result)) {
+                $resultArr[$k] = $result;
+            }
+        }
+
+        return $resultArr;
+    }
 }
