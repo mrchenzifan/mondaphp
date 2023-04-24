@@ -91,7 +91,7 @@ class StringUtil
     public static function hump2ul($str): string
     {
         $arr = [];
-        for ($i = 1; $i < strlen($str); $i++) {
+        for ($i = 0; $i < strlen($str); $i++) {
             if (ord($str[$i]) > 64 && ord($str[$i]) < 91) {
                 $arr[] = '_'.strtolower($str[$i]);
             } else {
