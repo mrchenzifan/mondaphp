@@ -18,7 +18,7 @@ class RSACrypt
         $encrypted = '';
         openssl_private_encrypt($data, $encrypted, $pi_key); //私钥加密
         //加密后的内容通常含有特殊字符，需要编码转换下，在网络间通过url传输时要注意base64编码是否是url安全的
-        return self::urlSafeB64encode($encrypted);
+        return static::urlSafeB64encode($encrypted);
     }
 
     /**
@@ -31,7 +31,7 @@ class RSACrypt
         }
         $pu_key = openssl_pkey_get_public($publicKey);
         $decrypted = '';
-        $data = self::urlSafeB64decode($data);
+        $data = static::urlSafeB64decode($data);
         openssl_public_decrypt($data, $decrypted, $pu_key); //公钥解密
 
         return $decrypted;
@@ -49,7 +49,7 @@ class RSACrypt
         $encrypted = '';
         openssl_public_encrypt($data, $encrypted, $pu_key); //公钥加密
         //加密后的内容通常含有特殊字符，需要编码转换下，在网络间通过url传输时要注意base64编码是否是url安全的
-        return self::urlSafeB64encode($encrypted);
+        return static::urlSafeB64encode($encrypted);
     }
 
     /**
@@ -62,7 +62,7 @@ class RSACrypt
         }
         $pi_key = openssl_pkey_get_private($privateKey);
         $decrypted = '';
-        $data = self::urlSafeB64decode($data);
+        $data = static::urlSafeB64decode($data);
         openssl_private_decrypt($data, $decrypted, $pi_key); //私钥解密
 
         return $decrypted;

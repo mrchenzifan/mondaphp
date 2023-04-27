@@ -40,7 +40,7 @@ class StringUtil
 
             //获取服务器节点机器 ID
             $mid = GF::getAppConfig('machine_id');
-            if (!$mid) {
+            if (! $mid) {
                 $mid = 0x01;
             }
 
@@ -74,7 +74,7 @@ class StringUtil
     public static function ul2hump($str): string
     {
         $str = trim($str);
-        if (!str_contains($str, '_')) {
+        if (! str_contains($str, '_')) {
             return $str;
         }
 
@@ -149,9 +149,9 @@ class StringUtil
         return implode('', $str);
     }
 
-
     /**
      * 生成编号
+     *
      * @param  string  $prefix
      * @param  int  $step
      * @return string
@@ -159,21 +159,21 @@ class StringUtil
     public static function getNo(string $prefix, int $step = 1): string
     {
         $date = date('Ymd');
-        //保存redis中的key，注意不要重复
+        // 保存redis中的key，注意不要重复
         $redisKey = 'getNo_uniqueNo_'.$date;
-        //利用increment即redis原生incrBy命令的原子性特性生成递增的序列号
+        // 利用increment即redis原生incrBy命令的原子性特性生成递增的序列号
         $increment = Redis::incrBy($redisKey, $step);
         if ($step == $increment) {
-            //首次执行时，给redisKey设置ttl，第二天这个key就可以被redis自动删除
+            // 首次执行时，给redisKey设置ttl，第二天这个key就可以被redis自动删除
             Redis::expire($redisKey, 86400 + 3600 * 2);
         }
 
         return $prefix.$date.sprintf('%04d', $increment);
     }
 
-
     /**
      * 格式化成树形结构
+     *
      * @param  array  $flatList
      * @param  string  $idKey
      * @param  string  $parentIdKey

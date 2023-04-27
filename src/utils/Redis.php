@@ -4,8 +4,14 @@ declare(strict_types=1);
 
 namespace herosphp\utils;
 
-use herosphp\GF;
-use RuntimeException;
+use function class_exists;
+use herosphp\core\Config;
+use Illuminate\Events\Dispatcher;
+use Illuminate\Redis\Connections\Connection;
+use Illuminate\Redis\RedisManager;
+use function in_array;
+use Workerman\Timer;
+use Workerman\Worker;
 
 /**
  * Class Redis
@@ -168,7 +174,7 @@ use RuntimeException;
  * @method static mixed watch($keys)
  * @method static mixed unwatch($keys)
  * Scripting methods
- * @method mixed eval($script, $numkeys, $keyOrArg1 = null, $keyOrArgN = null)
+ * @method static mixed eval($script, $numkeys, $keyOrArg1 = null, $keyOrArgN = null)
  * @method static mixed evalSha($scriptSha, $numkeys, ...$arguments)
  * @method static mixed script($command, ...$scripts)
  * @method static mixed client(...$args)
@@ -189,75 +195,77 @@ use RuntimeException;
  */
 class Redis
 {
-    protected string $prefix = '';
-
-    //herosphp redis
-    private static self $_instance;
-
-    private \Redis $_redis;
+    /**
+     * @var RedisManager|null
+     */
+    protected static ?RedisManager $instance = null;
 
     /**
-     *连接redis
-     *
-     * @throws \RedisException
+     * need to install phpredis extension
      */
-    private function __construct(array $config = [])
+    const PHPREDIS_CLIENT = 'phpredis';
+
+    /**
+     * need to install the 'predis/predis' packgage.
+     * cmd: composer install predis/predis
+     */
+    const PREDIS_CLIENT = 'predis';
+
+    /**
+     * Support client collection
+     */
+    public static array $allowClient = [
+        self::PHPREDIS_CLIENT,
+        self::PREDIS_CLIENT,
+    ];
+
+    /**
+     * @return RedisManager|null
+     */
+    public static function instance(): ?RedisManager
     {
-        if (! extension_loaded('redis')) {
-            throw new RuntimeException('please install redis extension!');
+        if (! static::$instance) {
+            $config = Config::get('redis');
+            $client = $config['client'] ?? self::PHPREDIS_CLIENT;
+
+            if (! in_array($client, static::$allowClient)) {
+                $client = self::PHPREDIS_CLIENT;
+            }
+            static::$instance = new RedisManager('', $client, $config);
         }
-        $redisConfig = ! empty($config) ? $config : GF::config('redis', []);
-        $this->_redis = new \Redis;
-        $result = $this->_redis->connect(
-            $redisConfig['host'],
-            (int) $redisConfig['port'],
-            (int) $redisConfig['timeout']
-        );
-        if ($result === false) {
-            throw new RuntimeException('redis connect fail');
-        }
-        if ($redisConfig['auth']) {
-            $this->_redis->auth($redisConfig['auth']);
-        }
-        $this->_redis->select((int) $redisConfig['database']);
-        $this->prefix = $redisConfig['prefix'] ?? '';
-        //统一设置前缀
-        $this->_redis->setOption(\Redis::OPT_PREFIX, $this->prefix);
+
+        return static::$instance;
     }
 
     /**
-     * 禁止clone
+     * Connection.
      *
-     * @return void
+     * @param  string  $name
+     * @return Connection
      */
-    private function __clone()
+    public static function connection(string $name = 'default'): Connection
     {
+        static $timers = [];
+        $connection = static::instance()->connection($name);
+        if (! isset($timers[$name])) {
+            $timers[$name] = Worker::getAllWorkers() ? Timer::add(55, function () use ($connection) {
+                $connection->get('ping');
+            }) : 1;
+            if (class_exists(Dispatcher::class)) {
+                $connection->setEventDispatcher(new Dispatcher);
+            }
+        }
+
+        return $connection;
     }
 
     /**
-     * @param $name
-     * @param $arguments
+     * @param  string  $name
+     * @param  array  $arguments
      * @return mixed
-     *
-     * @throws \RedisException
      */
-    public static function __callStatic($name, $arguments)
+    public static function __callStatic(string $name, array $arguments)
     {
-        return self::getInstance()->_redis->{$name}(...$arguments);
-    }
-
-    /**
-     * @param  array  $config
-     * @return Redis
-     *
-     * @throws \RedisException
-     */
-    public static function getInstance(array $config = []): self
-    {
-        if (! isset(self::$_instance)) {
-            self::$_instance = new self($config);
-        }
-
-        return self::$_instance;
+        return static::connection()->{$name}(...$arguments);
     }
 }

@@ -64,8 +64,6 @@ class ModelTransformUtils
         return $map;
     }
 
-
-
     /**
      * 多维数组过滤value 为 null
      *
@@ -83,7 +81,7 @@ class ModelTransformUtils
             if (is_array($result)) {
                 $result = static::filterNull($item);
             }
-            if (!is_null($result)) {
+            if (! is_null($result)) {
                 $resultArr[$k] = $result;
             }
         }
