@@ -2,14 +2,17 @@
 
 namespace herosphp\plugins\crontab;
 
-use Workerman\Lib\Timer;
+use Workerman\Timer;
 
+/**
+ * Class Crontab
+ */
 class Crontab
 {
     /**
      * @var string
      */
-    protected $_rule;
+    protected string $_rule;
 
     /**
      * @var callable
@@ -19,12 +22,12 @@ class Crontab
     /**
      * @var string
      */
-    protected $_name;
+    protected string $_name;
 
     /**
      * @var int
      */
-    protected $_id;
+    protected int $_id;
 
     /**
      * @var array
@@ -34,11 +37,11 @@ class Crontab
     /**
      * Crontab constructor.
      *
-     * @param $rule
-     * @param $callback
-     * @param  null  $name
+     * @param  string  $rule
+     * @param  callable  $callback
+     * @param  string  $name
      */
-    public function __construct($rule, $callback, $name = null)
+    public function __construct(string $rule, callable $callback, string $name = '')
     {
         $this->_rule = $rule;
         $this->_callback = $callback;
@@ -51,7 +54,7 @@ class Crontab
     /**
      * @return string
      */
-    public function getRule()
+    public function getRule(): string
     {
         return $this->_rule;
     }
@@ -59,7 +62,7 @@ class Crontab
     /**
      * @return callable
      */
-    public function getCallback()
+    public function getCallback(): callable
     {
         return $this->_callback;
     }
@@ -67,7 +70,7 @@ class Crontab
     /**
      * @return string
      */
-    public function getName()
+    public function getName(): string
     {
         return $this->_name;
     }
@@ -75,7 +78,7 @@ class Crontab
     /**
      * @return int
      */
-    public function getId()
+    public function getId(): int
     {
         return $this->_id;
     }
@@ -83,7 +86,7 @@ class Crontab
     /**
      * @return bool
      */
-    public function destroy()
+    public function destroy(): bool
     {
         return static::remove($this->_id);
     }
@@ -91,7 +94,7 @@ class Crontab
     /**
      * @return array
      */
-    public static function getAll()
+    public static function getAll(): array
     {
         return static::$_instances;
     }
@@ -100,7 +103,7 @@ class Crontab
      * @param $id
      * @return bool
      */
-    public static function remove($id)
+    public static function remove($id): bool
     {
         if ($id instanceof self) {
             $id = $id->getId();
@@ -116,7 +119,7 @@ class Crontab
     /**
      * @return int
      */
-    protected static function createId()
+    protected static function createId(): int
     {
         static $id = 0;
 
@@ -124,41 +127,42 @@ class Crontab
     }
 
     /**
-     * tryInit.
+     * tryInit
      */
     protected static function tryInit(): void
     {
-        static $inited = false;
-        if (! $inited) {
-            $inited = true;
-            $parser = new Parser;
-            $callback = function () use ($parser, &$callback) {
-                foreach (static::$_instances as $crontab) {
-                    $rule = $crontab->getRule();
-                    $cb = $crontab->getCallback();
-                    if (! $cb || ! $rule) {
-                        continue;
-                    }
-                    $times = $parser->parse($rule);
-                    $now = time();
-                    foreach ($times as $time) {
-                        $t = $time - $now;
-                        if ($t <= 0) {
-                            $t = 0.000001;
-                        }
-                        Timer::add($t, $cb, null, false);
-                    }
-                }
-                Timer::add(60 - time() % 60, $callback, null, false);
-            };
-
-            $next_time = time() % 60;
-            if (0 == $next_time) {
-                $next_time = 0.00001;
-            } else {
-                $next_time = 60 - $next_time;
-            }
-            Timer::add($next_time, $callback, null, false);
+        static $init = false;
+        if ($init) {
+            return;
         }
+        $init = true;
+        $callback = function () use (&$callback) {
+            $parser = new Parser;
+            foreach (static::$_instances as $crontab) {
+                $rule = $crontab->getRule();
+                $cb = $crontab->getCallback();
+                if (! $cb || ! $rule) {
+                    continue;
+                }
+                $times = $parser->parse($rule);
+                $now = time();
+                foreach ($times as $time) {
+                    $t = $time - $now;
+                    if ($t <= 0) {
+                        $t = 0.000001;
+                    }
+                    Timer::add($t, $cb, null, false);
+                }
+            }
+            Timer::add(60 - time() % 60, $callback, null, false);
+        };
+
+        $nextTime = time() % 60;
+        if ($nextTime == 0) {
+            $nextTime = 0.00001;
+        } else {
+            $nextTime = 60 - $nextTime;
+        }
+        Timer::add($nextTime, $callback, null, false);
     }
 }
