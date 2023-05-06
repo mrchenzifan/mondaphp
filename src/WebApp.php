@@ -20,6 +20,8 @@ use herosphp\core\HttpRequest;
 use herosphp\core\HttpResponse;
 use herosphp\core\Router;
 use herosphp\exception\BaseExceptionHandler;
+use herosphp\exception\MethodNotAllowedException;
+use herosphp\exception\NoFoundException;
 use herosphp\exception\RouterException;
 use herosphp\utils\Logger;
 use herosphp\utils\StringUtil;
@@ -158,19 +160,16 @@ class WebApp
                 // find public file
                 case Dispatcher::NOT_FOUND:
                     $file = static::getPublicFile($request->path());
-                    if ($file === '') {
-                        static::send(GF::response(code: 404, body: 'Page not found.'));
-                    } else {
+                    if ($file !== '') {
                         if (static::notModifiedSince($file)) {
                             static::send((new HttpResponse(304)));
                         } else {
                             static::send((new HttpResponse)->withFile($file));
                         }
                     }
-                    break;
+                    throw new NoFoundException('Page not found.');
                 case Dispatcher::METHOD_NOT_ALLOWED:
-                    static::send(GF::response(code: 405, body: 'Method not allowed.'));
-                    break;
+                    throw new MethodNotAllowedException('Method not allowed.');
                 case Dispatcher::FOUND:
                     $handler = $routeInfo[1];
                     $vars = $routeInfo[2];
@@ -239,7 +238,8 @@ class WebApp
                 $params[] = match ($attr->getName()) {
                     //name required
                     RequestPath::class => $pathParams[$attr->getArguments()['name']],
-                    RequestParam::class => static::$request->getParameter($attr->getArguments()['name'], $attr->getArguments()['default'] ?? ''),
+                    RequestParam::class => static::$request->getParameter($attr->getArguments()['name'],
+                        $attr->getArguments()['default'] ?? ''),
                     RequestBody::class => StringUtil::jsonEncode(static::$request->post()),
                     default => null,
                 };

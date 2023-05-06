@@ -18,7 +18,7 @@ namespace herosphp\utils;
  */
 class FileUtil
 {
-    public static function makeFileDirs($path): bool
+    public static function makeFileDirs(string $path): bool
     {
         // Both / and \ dir separators should be considered
         $files = preg_split('/[\/|\\\]/s', $path);
@@ -34,13 +34,13 @@ class FileUtil
     }
 
     // get file extension
-    public static function getFileExtension($filename): string
+    public static function getFileExtension(string $filename): string
     {
         return strtolower(substr(strrchr($filename, '.'), 1));
     }
 
     // delete dirs recursively
-    public static function removeDirs($dir): bool
+    public static function removeDirs(string $dir): bool
     {
         $handle = opendir($dir);
         while ($file = readdir($handle)) {
@@ -59,7 +59,7 @@ class FileUtil
     }
 
     // copy a file or a dir
-    public static function copyDir($src, $dst): bool
+    public static function copyDir(string $src, string $dst): bool
     {
         // single file
         if (is_file($src)) {
@@ -88,7 +88,7 @@ class FileUtil
     }
 
     // check if a dir is empty
-    public static function isEmptyDir($dirName): bool
+    public static function isEmptyDir(string $dirName): bool
     {
         $handle = opendir($dirName);
         if ($handle) {

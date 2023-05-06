@@ -20,7 +20,7 @@ use herosphp\GF;
 
 class StringUtil
 {
-    public const UUID_LOCK_KEY = 'herosphp_uuid_lock_key';
+    public const UUID_LOCK_KEY = 'php_global_uuid_lock_key';
 
     /**
      * 生成一个唯一分布式UUID,根据机器不同生成. 长度为18位。
