@@ -23,6 +23,7 @@ class CorsMiddleware implements MiddlewareInterface
             ]);
 
         }
+
         return $response;
     }
 }

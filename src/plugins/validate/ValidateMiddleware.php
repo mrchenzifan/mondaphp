@@ -24,7 +24,7 @@ class ValidateMiddleware implements MiddlewareInterface
                 /** @var Valid $methodValidInstance */
                 $methodValidInstance = $validAttribute->newInstance();
                 $methodVInstance = new ($methodValidInstance->class);
-                if (!$methodVInstance instanceof Validate) {
+                if (! $methodVInstance instanceof Validate) {
                     throw new ValidateException("{$methodVInstance->class} must extend \\herosphp\\plugin\\validate\Validate");
                 }
                 $methodVInstance->scene($methodValidInstance->scene)->check([...$request->get(), ...$request->post()]);
