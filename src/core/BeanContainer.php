@@ -100,6 +100,7 @@ class BeanContainer
     }
 
     // handler class Inject Annotation properties
+
     /**
      * @throws ReflectionException
      */
@@ -113,10 +114,17 @@ class BeanContainer
             }
             // find property class name
             $_attr = $_attrs[0];
-            $name = $property->getType()->getName();
-            $_args = $_attr->getArguments();
-            if (! empty($_args)) {
-                $name = array_shift($_args);
+            $name = $property->getType()?->getName();
+
+            // unSuggest use strict_types
+            if (is_null($name)) {
+                $_args = $_attr->getArguments();
+                if (! empty($_args)) {
+                    $name = array_shift($_args);
+                }
+            }
+            if (empty($name)) {
+                throw new HeroException('Inject annotation must have a name or type');
             }
             // set property accessibility
             $property->setValue($obj, static::build($name));
