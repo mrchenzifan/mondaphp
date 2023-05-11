@@ -34,7 +34,7 @@ class Csv implements ExportInterface
         foreach ($data as $item) {
             $regData = [];
             foreach ($item as $v) {
-                $v = static::filterSpecialValue($v ?? '');
+                $v = static::filterSpecialValue((string) $v);
                 $regData[] = $v;
             }
             $this->connection->send(implode(',', $regData)."\n", true);
@@ -58,7 +58,7 @@ class Csv implements ExportInterface
         $this->connection->send($headRaw, true);
     }
 
-    protected static function filterSpecialValue(string|int $v): string
+    protected static function filterSpecialValue(string $v): string
     {
         //过滤回车等字符
         $v = preg_replace("/(\r\n|\n|\r|\t)/i", '', $v);
