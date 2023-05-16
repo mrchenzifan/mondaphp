@@ -15,11 +15,6 @@ use Workerman\Worker;
 class Monitor
 {
     /**
-     * @var string
-     */
-    public static string $lockFile = RUNTIME_PATH.'/monitor.lock';
-
-    /**
      * @var array
      */
     protected array $paths = [];
@@ -30,23 +25,58 @@ class Monitor
     protected array $extensions = [];
 
     /**
+     * @var string
+     */
+    public static string $lockFile = RUNTIME_PATH . 'monitor.lock';
+
+    /**
+     * Pause monitor
+     * @return void
+     */
+    public static function pause(): void
+    {
+        file_put_contents(static::$lockFile, time());
+    }
+
+    /**
+     * Resume monitor
+     * @return void
+     */
+    public static function resume(): void
+    {
+        clearstatcache();
+        if (is_file(static::$lockFile)) {
+            unlink(static::$lockFile);
+        }
+    }
+
+    /**
+     * Whether monitor is paused
+     * @return bool
+     */
+    public static function isPaused(): bool
+    {
+        clearstatcache();
+        return file_exists(static::$lockFile);
+    }
+
+    /**
      * FileMonitor constructor.
-     *
      * @param $monitorDir
      * @param $monitorExtensions
-     * @param  array  $options
+     * @param array $options
      */
     public function __construct($monitorDir, $monitorExtensions, array $options = [])
     {
         static::resume();
-        $this->paths = (array) $monitorDir;
+        $this->paths = (array)$monitorDir;
         $this->extensions = $monitorExtensions;
-        if (! Worker::getAllWorkers()) {
+        if (!Worker::getAllWorkers()) {
             return;
         }
         $disableFunctions = explode(',', ini_get('disable_functions'));
         if (in_array('exec', $disableFunctions, true)) {
-            echo "\nMonitor file change turned off because exec() has been disabled by disable_functions setting in ".PHP_CONFIG_FILE_PATH."/php.ini\n";
+            echo "\nMonitor file change turned off because exec() has been disabled by disable_functions setting in " . PHP_CONFIG_FILE_PATH . "/php.ini\n";
         } else {
             if ($options['enable_file_monitor'] ?? true) {
                 Timer::add(1, function () {
@@ -62,67 +92,29 @@ class Monitor
     }
 
     /**
-     * Pause monitor
-     *
-     * @return void
-     */
-    public static function pause(): void
-    {
-        file_put_contents(static::$lockFile, time());
-    }
-
-    /**
-     * Resume monitor
-     *
-     * @return void
-     */
-    public static function resume(): void
-    {
-        clearstatcache();
-        if (is_file(static::$lockFile)) {
-            unlink(static::$lockFile);
-        }
-    }
-
-    /**
-     * Whether monitor is paused
-     *
-     * @return bool
-     */
-    public static function isPaused(): bool
-    {
-        clearstatcache();
-
-        return file_exists(static::$lockFile);
-    }
-
-    /**
      * @param $monitorDir
      * @return bool
      */
     public function checkFilesChange($monitorDir): bool
     {
         static $lastMtime, $tooManyFilesCheck;
-        if (! $lastMtime) {
+        if (!$lastMtime) {
             $lastMtime = time();
         }
         clearstatcache();
-        if (! is_dir($monitorDir)) {
-            if (! is_file($monitorDir)) {
+        if (!is_dir($monitorDir)) {
+            if (!is_file($monitorDir)) {
                 return false;
             }
             $iterator = [new SplFileInfo($monitorDir)];
         } else {
             // recursive traversal directory
-            $dirIterator = new RecursiveDirectoryIterator(
-                $monitorDir,
-                FilesystemIterator::SKIP_DOTS | FilesystemIterator::FOLLOW_SYMLINKS
-            );
+            $dirIterator = new RecursiveDirectoryIterator($monitorDir, FilesystemIterator::SKIP_DOTS | FilesystemIterator::FOLLOW_SYMLINKS);
             $iterator = new RecursiveIteratorIterator($dirIterator);
         }
         $count = 0;
         foreach ($iterator as $file) {
-            $count++;
+            $count ++;
             /** var SplFileInfo $file */
             if (is_dir($file->getRealPath())) {
                 continue;
@@ -130,13 +122,12 @@ class Monitor
             // check mtime
             if ($lastMtime < $file->getMTime() && in_array($file->getExtension(), $this->extensions, true)) {
                 $var = 0;
-                exec('"'.PHP_BINARY.'" -l '.$file, $out, $var);
+                exec('"'.PHP_BINARY . '" -l ' . $file, $out, $var);
+                $lastMtime = $file->getMTime();
                 if ($var) {
-                    $lastMtime = $file->getMTime();
                     continue;
                 }
-                $lastMtime = $file->getMTime();
-                echo $file." update and reload\n";
+                echo $file . " update and reload\n";
                 // send SIGUSR1 signal to master process for reload
                 if (DIRECTORY_SEPARATOR === '/') {
                     posix_kill(posix_getppid(), SIGUSR1);
@@ -146,11 +137,10 @@ class Monitor
                 break;
             }
         }
-        if (! $tooManyFilesCheck && $count > 1000) {
+        if (!$tooManyFilesCheck && $count > 1000) {
             echo "Monitor: There are too many files ($count files) in $monitorDir which makes file monitoring very slow\n";
             $tooManyFilesCheck = 1;
         }
-
         return false;
     }
 
@@ -167,7 +157,6 @@ class Monitor
                 return true;
             }
         }
-
         return false;
     }
 
@@ -175,27 +164,27 @@ class Monitor
      * @param $memoryLimit
      * @return void
      */
-    public function checkMemory($memoryLimit)
+    public function checkMemory($memoryLimit): void
     {
         if (static::isPaused() || $memoryLimit <= 0) {
             return;
         }
         $ppid = posix_getppid();
         $childrenFile = "/proc/$ppid/task/$ppid/children";
-        if (! is_file($childrenFile) || ! ($children = file_get_contents($childrenFile))) {
+        if (!is_file($childrenFile) || !($children = file_get_contents($childrenFile))) {
             return;
         }
         foreach (explode(' ', $children) as $pid) {
-            $pid = (int) $pid;
+            $pid = (int)$pid;
             $statusFile = "/proc/$pid/status";
-            if (! is_file($statusFile) || ! ($status = file_get_contents($statusFile))) {
+            if (!is_file($statusFile) || !($status = file_get_contents($statusFile))) {
                 continue;
             }
             $mem = 0;
             if (preg_match('/VmRSS\s*?:\s*?(\d+?)\s*?kB/', $status, $match)) {
                 $mem = $match[1];
             }
-            $mem = (int) ($mem / 1024);
+            $mem = (int)($mem / 1024);
             if ($mem >= $memoryLimit) {
                 posix_kill($pid, SIGINT);
             }
@@ -204,7 +193,6 @@ class Monitor
 
     /**
      * Get memory limit
-     *
      * @return float
      */
     protected function getMemoryLimit($memoryLimit)
@@ -213,7 +201,7 @@ class Monitor
             return 0;
         }
         $usePhpIni = false;
-        if (! $memoryLimit) {
+        if (!$memoryLimit) {
             $memoryLimit = ini_get('memory_limit');
             $usePhpIni = true;
         }
@@ -223,25 +211,20 @@ class Monitor
         }
         $unit = strtolower($memoryLimit[strlen($memoryLimit) - 1]);
         if ($unit === 'g') {
-            $memoryLimit = 1024 * (int) $memoryLimit;
+            $memoryLimit = 1024 * (int)$memoryLimit;
+        } else if ($unit === 'm') {
+            $memoryLimit = (int)$memoryLimit;
+        } else if ($unit === 'k') {
+            $memoryLimit = ((int)$memoryLimit / 1024);
         } else {
-            if ($unit === 'm') {
-                $memoryLimit = (int) $memoryLimit;
-            } else {
-                if ($unit === 'k') {
-                    $memoryLimit = ((int) $memoryLimit / 1024);
-                } else {
-                    $memoryLimit = ((int) $memoryLimit / (1024 * 1024));
-                }
-            }
+            $memoryLimit = ((int)$memoryLimit / (1024 * 1024));
         }
         if ($memoryLimit < 30) {
             $memoryLimit = 30;
         }
         if ($usePhpIni) {
-            $memoryLimit = (int) (0.8 * $memoryLimit);
+            $memoryLimit = (int)(0.8 * $memoryLimit);
         }
-
         return $memoryLimit;
     }
 }
