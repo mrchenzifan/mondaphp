@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace herosphp\plugins\database;
 
+use herosphp\core\Bootstrap;
 use herosphp\GF;
 use herosphp\WebApp;
 use Illuminate\Container\Container;
@@ -13,22 +14,16 @@ use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Str;
 use Throwable;
 use Workerman\Timer;
+use Workerman\Worker;
 
 /**
  * laravelDB启动器
  */
-class LaravelDbStarter
+class LaravelDbStarter implements Bootstrap
 {
     protected static string $pageName = 'page';
 
     protected static bool $autoPageResolver = true;
-
-    /**
-     * debug sql
-     *
-     * @var bool
-     */
-    protected static bool $debug = true;
 
     /**
      * 保持长链接
@@ -37,7 +32,7 @@ class LaravelDbStarter
      */
     protected static bool $keepAlive = false;
 
-    public static function init(): void
+    public static function start(?Worker $worker): void
     {
         $connections = GF::config('database', []);
         if (! $connections) {
@@ -67,7 +62,7 @@ class LaravelDbStarter
         $capsule->setAsGlobal();
         $capsule->bootEloquent();
 
-        if (static::$debug) {
+        if (GF::getAppConfig('debug', false)) {
             Db::listen(function ($query) {
                 $sql = $query->sql;
                 $bindings = [];

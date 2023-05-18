@@ -19,9 +19,11 @@ namespace herosphp;
 
 use function filter_var;
 use herosphp\core\BeanContainer;
+use herosphp\core\Bootstrap;
 use herosphp\core\Config;
 use herosphp\core\HttpResponse;
 use herosphp\json\Jsonable;
+use herosphp\utils\Logger;
 use herosphp\utils\StringUtil;
 use Workerman\Protocols\Http\Session;
 use Workerman\Worker;
@@ -111,6 +113,7 @@ class GF
             }
         }
         $worker->onWorkerStart = function ($worker) use ($config) {
+            self::boot($worker);
             if (isset($config['handler'])) {
                 if (! class_exists($config['handler'])) {
                     echo "process error: class {$config['handler']} not exists\r\n";
@@ -120,6 +123,7 @@ class GF
                 $instance = BeanContainer::make($config['handler'], $config['constructor'] ?? []);
                 static::workerBind($worker, $instance);
             }
+
         };
     }
 
@@ -259,5 +263,25 @@ class GF
     public static function session(): bool|Session
     {
         return WebApp::$request->session();
+    }
+
+    /**
+     * 启动
+     *
+     * @param  Worker|null  $worker
+     * @return void
+     */
+    public static function boot(?Worker $worker): void
+    {
+        foreach (Config::get('bootstrap', []) as $className) {
+            if (! class_exists($className)) {
+                $log = "Warning: Class $className setting in config/bootstrap.php not found\r\n";
+                echo $log;
+                Logger::error($log);
+                continue;
+            }
+            /** @var Bootstrap $className */
+            $className::start($worker);
+        }
     }
 }

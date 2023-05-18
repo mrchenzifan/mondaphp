@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace herosphp\plugins\event;
 
+use herosphp\core\Bootstrap;
 use herosphp\GF;
+use Workerman\Worker;
 
-class EventStarter
+class EventStarter implements Bootstrap
 {
     protected static bool $debug = false;
 
@@ -18,7 +20,7 @@ class EventStarter
     /**
      * @throws \ReflectionException
      */
-    public static function init(): void
+    public static function start(?Worker $worker): void
     {
         $config = GF::config('event', []);
         if (! $config) {

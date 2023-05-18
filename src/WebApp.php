@@ -130,7 +130,8 @@ class WebApp
         }
 
         $worker->onWorkerStart = static function ($w) {
-            static::onWorkerStart();
+            static::onWorkerStart($w);
+
         };
 
         // http request
@@ -143,8 +144,10 @@ class WebApp
     /**
      * @throws \ReflectionException
      */
-    public static function onWorkerStart(): void
+    public static function onWorkerStart($worker): void
     {
+        // 启动
+        GF::boot($worker);
         // scan the class file and init the router info
         AnnotationParser::run(APP_PATH, 'app\\');
         static::$_dispatcher = Router::getDispatcher();
@@ -167,7 +170,7 @@ class WebApp
                             static::send((new HttpResponse)->withFile($file));
                         }
                     }
-                    throw new NoFoundException('Page not found.');
+                    throw new NoFoundException("path not found:{$request->path()}.");
                 case Dispatcher::METHOD_NOT_ALLOWED:
                     throw new MethodNotAllowedException('Method not allowed.');
                 case Dispatcher::FOUND:

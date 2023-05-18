@@ -2,20 +2,23 @@
 
 namespace herosphp\plugins\session;
 
+use herosphp\core\Bootstrap;
 use herosphp\GF;
 use function property_exists;
 use Workerman\Protocols\Http;
 use Workerman\Protocols\Http\Session as SessionBase;
+use Workerman\Worker;
 
 /**
  * Class Session
  */
-class Session
+class Session implements Bootstrap
 {
     /**
+     * @param  Worker|null  $worker
      * @return void
      */
-    public static function init(): void
+    public static function start(?Worker $worker): void
     {
         $config = GF::config('session', []);
         if (property_exists(SessionBase::class, 'name')) {
@@ -42,5 +45,3 @@ class Session
         }
     }
 }
-
-Session::init();
