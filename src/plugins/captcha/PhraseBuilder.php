@@ -7,7 +7,7 @@ namespace herosphp\plugins\captcha;
  *
  * @author Gregwar <g.passault@gmail.com>
  */
-class PhraseBuilder implements PhraseBuilderInterface
+class PhraseBuilder
 {
     /**
      * @var int
@@ -66,11 +66,5 @@ class PhraseBuilder implements PhraseBuilderInterface
         return strtr(strtolower($str), '01', 'ol');
     }
 
-    /**
-     * A static helper to compare
-     */
-    public static function comparePhrases($str1, $str2): bool
-    {
-        return self::doNiceize($str1) === self::doNiceize($str2);
-    }
+
 }
