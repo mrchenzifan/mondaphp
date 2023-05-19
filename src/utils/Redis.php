@@ -48,7 +48,6 @@ use Workerman\Worker;
  * @method static bool expireAt($key, $timestamp)
  * @method static bool pexpireAt($key, $timestamp)
  * @method static array keys($pattern)
- * @method static bool|array scan($it)
  * @method static void migrate($host, $port, $keys, $dbIndex, $timeout, $copy = false, $replace = false)
  * @method static bool select($dbIndex)
  * @method static bool move($key, $dbIndex)
@@ -192,6 +191,7 @@ use Workerman\Worker;
  * @method static mixed getReadTimeout()
  * @method static mixed getPersistentID()
  * @method static mixed getAuth()
+ * @method static array info()
  */
 class Redis
 {
