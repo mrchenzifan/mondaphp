@@ -46,19 +46,26 @@ class Captcha
      */
     protected array $color = [255, 255, 255];
 
+
+    /**
+     * 设置透明色
+     * @var int
+     */
+    protected int $alpha = 0;
+
     /**
      * 是否添加干扰点
      *
      * @var int
      */
-    protected int $pointNum = 100;
+    private int $pointNum = 50;
 
     /**
      * 是否添加干扰线
      *
      * @var int
      */
-    protected int $lineNum = 3;
+    private int $lineNum = 3;
 
     /**
      * 字体文件
@@ -140,6 +147,20 @@ class Captcha
         return $this;
     }
 
+
+    /**
+     * 设置透明度
+     *
+     * @param  int  $alpha
+     * @return $this
+     */
+    public function setAlpha(int $alpha): static
+    {
+        $this->alpha = $alpha;
+
+        return $this;
+    }
+
     /**
      * 设置字体大小 （1，2，3，4，5）
      *
@@ -156,7 +177,7 @@ class Captcha
     /**
      * 设置字体
      *
-     * @param $font
+     * @param  string  $font
      * @return $this
      */
     public function setFont(string $font): static
@@ -210,9 +231,9 @@ class Captcha
     private function build(): void
     {
         // 创建底板
-        $image = imagecreatetruecolor($this->width, $this->height);
+        $image = imagecreate($this->width, $this->height);
         // 填充颜色
-        $bgColor = imagecolorallocate($image, $this->color[0], $this->color[1], $this->color[2]);
+        $bgColor = imagecolorallocatealpha($image, $this->color[0], $this->color[1], $this->color[2], $this->alpha);
         imagefill($image, 0, 0, $bgColor);
         putenv('GDFONTPATH='.realpath('.'));
         // 垂直居中
