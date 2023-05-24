@@ -1,0 +1,20 @@
+<?php
+declare(strict_types=1);
+return [
+    'credentials' => [
+        'key' => 'xxx',
+        'secret' => 'xxx',
+    ],
+    'region' => '',
+    'version' => 'latest',
+    'bucket_endpoint' => false,
+    'use_path_style_endpoint' => true,
+    'endpoint' => 'xxx',
+    'bucket_name' => 'xxx',
+    'domain' => 'xxx',
+    'create_bucket' => false, //init upload,only run once.
+    'is_set_policy' => true, //only true,set policies,run once.
+    'policies' => [  //options
+        'read+write' => ['*'], //@note must care permission
+    ],
+];

@@ -1,11 +1,5 @@
 <?php
 
-// * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-// * Copyright 2014 The Herosphp Authors. All rights reserved.
-// * Use of this source code is governed by a MIT-style license
-// * that can be found in the LICENSE file.
-// * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
 declare(strict_types=1);
 
 namespace herosphp;
@@ -14,7 +8,7 @@ namespace herosphp;
  * 框架公共的常用的全局函数
  * ---------------------------------------------------------------------
  *
- * @author RockYang<yangjian102621@gmail.com>
+ * @author chenzf<chenzf@pvc123.com>
  */
 
 use function filter_var;

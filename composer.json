@@ -21,8 +21,7 @@
         "workerman/workerman": "^4.0",
         "workerman/redis-queue": "^1.0",
         "symfony/console": "^6.0",
-        "doctrine/inflector": "^2.0",
-        "ext-gd": "*"
+        "doctrine/inflector": "^2.0"
     },
     "autoload": {
         "psr-4": {

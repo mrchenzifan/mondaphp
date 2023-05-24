@@ -2,6 +2,8 @@
 
 namespace herosphp\plugins\captcha;
 
+use herosphp\exception\HeroException;
+
 class Captcha
 {
     /**
@@ -46,9 +48,9 @@ class Captcha
      */
     protected array $color = [255, 255, 255];
 
-
     /**
      * 设置透明色
+     *
      * @var int
      */
     protected int $alpha = 0;
@@ -86,6 +88,10 @@ class Captcha
      */
     public function __construct()
     {
+
+        if (! function_exists('imagecreate')) {
+            throw new HeroException('Please install GD library ');
+        }
         $this->font = __DIR__.DIRECTORY_SEPARATOR.'fonts'.DIRECTORY_SEPARATOR.'arial.ttf';
     }
 
@@ -146,7 +152,6 @@ class Captcha
 
         return $this;
     }
-
 
     /**
      * 设置透明度
