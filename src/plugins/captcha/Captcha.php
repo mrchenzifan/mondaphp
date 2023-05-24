@@ -53,7 +53,7 @@ class Captcha
      *
      * @var int
      */
-    protected int $alpha = 0;
+    protected int $alpha = 127;
 
     /**
      * 是否添加干扰点

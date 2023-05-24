@@ -73,9 +73,9 @@ class GF
     }
 
     // get app config
-    public static function getAppConfig(string $key)
+    public static function getAppConfig(string $key, $default = null)
     {
-        return static::config("app.{$key}");
+        return static::config("app.{$key}", $default);
     }
 
     public static function config($key = null, $default = null)
