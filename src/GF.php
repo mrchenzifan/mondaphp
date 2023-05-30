@@ -11,16 +11,17 @@ namespace herosphp;
  * @author chenzf<chenzf@pvc123.com>
  */
 
-use function filter_var;
 use herosphp\core\BeanContainer;
 use herosphp\core\Bootstrap;
 use herosphp\core\Config;
 use herosphp\core\HttpResponse;
 use herosphp\json\Jsonable;
 use herosphp\utils\Logger;
+use herosphp\utils\Redis;
 use herosphp\utils\StringUtil;
 use Workerman\Protocols\Http\Session;
 use Workerman\Worker;
+use function filter_var;
 
 class GF
 {
@@ -109,7 +110,7 @@ class GF
         $worker->onWorkerStart = function ($worker) use ($config) {
             self::boot($worker);
             if (isset($config['handler'])) {
-                if (! class_exists($config['handler'])) {
+                if (!class_exists($config['handler'])) {
                     echo "process error: class {$config['handler']} not exists\r\n";
 
                     return;
@@ -163,15 +164,15 @@ class GF
     public static function isIntranetIp(string $ip): bool
     {
         // Not validate ip .
-        if (! filter_var($ip, \FILTER_VALIDATE_IP)) {
+        if (!filter_var($ip, \FILTER_VALIDATE_IP)) {
             return false;
         }
         // Is intranet ip ? For IPv4, the result of false may not be accurate, so we need to check it manually later .
-        if (! filter_var($ip, \FILTER_VALIDATE_IP, \FILTER_FLAG_NO_PRIV_RANGE | \FILTER_FLAG_NO_RES_RANGE)) {
+        if (!filter_var($ip, \FILTER_VALIDATE_IP, \FILTER_FLAG_NO_PRIV_RANGE | \FILTER_FLAG_NO_RES_RANGE)) {
             return true;
         }
         // Manual check only for IPv4 .
-        if (! filter_var($ip, \FILTER_VALIDATE_IP, \FILTER_FLAG_IPV4)) {
+        if (!filter_var($ip, \FILTER_VALIDATE_IP, \FILTER_FLAG_IPV4)) {
             return false;
         }
         // Manual check .
@@ -268,7 +269,7 @@ class GF
     public static function boot(?Worker $worker): void
     {
         foreach (Config::get('bootstrap', []) as $className) {
-            if (! class_exists($className)) {
+            if (!class_exists($className)) {
                 $log = "Warning: Class $className setting in config/bootstrap.php not found\r\n";
                 echo $log;
                 Logger::error($log);
@@ -278,4 +279,43 @@ class GF
             $className::start($worker);
         }
     }
+
+
+    /**
+     * reload  (不支持windows)
+     * @return bool
+     */
+    public static function reloadWorker(): bool
+    {
+        if (function_exists('posix_kill')) {
+            try {
+                posix_kill(posix_getppid(), SIGUSR1);
+                return true;
+            } catch (\Throwable) {
+            }
+        }
+        return false;
+    }
+
+    /**
+     * lua减少库存
+     */
+    public static function luaDecStock(string $key, int $val)
+    {
+        $script = <<<LUA
+local stock = redis.call('get', KEYS[1])
+stock = tonumber(stock)
+local userBuyNum = tonumber(ARGV[1])
+if (stock == 0) then
+    return -1
+elseif (stock < userBuyNum) then
+    return -2
+else
+    redis.call('decrby', KEYS[1], ARGV[1])
+    return 0
+end
+LUA;
+        return Redis::eval($script, 1, $key, $val);
+    }
+
 }
