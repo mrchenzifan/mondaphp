@@ -28,7 +28,10 @@
     "autoload": {
         "psr-4": {
             "herosphp\\": "./src"
-        }
+        },
+        "files": [
+            "./src/helpers.php"
+        ]
     },
     "require-dev": {
         "laravel/pint": "^0.1.7",

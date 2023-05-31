@@ -215,12 +215,14 @@ class GF
     }
 
     // create redirect
-    public static function redirect(string $url, int $code = 301): HttpResponse
+    public static function redirect(string $url, int $code = 302, array $headers = []): HttpResponse
     {
-        $headers = [];
-        $headers['Location'] = $url;
+        $response = new HttpResponse($code, ['Location' => $url]);
+        if (! empty($headers)) {
+            $response->withHeaders($headers);
+        }
 
-        return new HttpResponse($code, $headers);
+        return $response;
     }
 
     // cpu count
