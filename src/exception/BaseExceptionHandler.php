@@ -5,7 +5,7 @@ namespace herosphp\exception;
 use herosphp\core\HttpRequest;
 use herosphp\core\HttpResponse;
 use herosphp\GF;
-use herosphp\utils\Logger;
+use herosphp\utils\Log;
 use herosphp\utils\StringUtil;
 use Throwable;
 
@@ -24,7 +24,7 @@ class BaseExceptionHandler implements ExceptionHandlerInterface
         if ($this->shouldNotReport($e)) {
             return;
         }
-        Logger::error($e);
+        Log::error($e->getMessage());
     }
 
     /**

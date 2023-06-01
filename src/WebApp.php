@@ -23,7 +23,7 @@ use herosphp\exception\BaseExceptionHandler;
 use herosphp\exception\MethodNotAllowedException;
 use herosphp\exception\NoFoundException;
 use herosphp\exception\RouterException;
-use herosphp\utils\Logger;
+use herosphp\utils\Log;
 use herosphp\utils\StringUtil;
 use ReflectionMethod;
 use ReflectionParameter;
@@ -326,7 +326,7 @@ class WebApp
             return $exceptionHandler->render($request, $e);
         } catch (Throwable $e) {
             if (GF::getAppConfig('debug')) {
-                Logger::error($e->getMessage());
+                Log::error($e->getMessage());
             }
 
             return GF::response(code: 500, body: 'Oops, it seems something went wrong.');

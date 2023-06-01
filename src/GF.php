@@ -11,13 +11,13 @@ namespace herosphp;
  * @author chenzf<chenzf@pvc123.com>
  */
 
+use herosphp\utils\Log;
 use function filter_var;
 use herosphp\core\BeanContainer;
 use herosphp\core\Bootstrap;
 use herosphp\core\Config;
 use herosphp\core\HttpResponse;
 use herosphp\json\Jsonable;
-use herosphp\utils\Logger;
 use herosphp\utils\Redis;
 use herosphp\utils\StringUtil;
 use Workerman\Protocols\Http\Session;
@@ -274,7 +274,7 @@ class GF
             if (! class_exists($className)) {
                 $log = "Warning: Class $className setting in config/bootstrap.php not found\r\n";
                 echo $log;
-                Logger::error($log);
+                Log::error($log);
                 continue;
             }
             /** @var Bootstrap $className */
