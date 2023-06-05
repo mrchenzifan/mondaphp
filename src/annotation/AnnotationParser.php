@@ -51,7 +51,7 @@ class AnnotationParser
     /**
      * scan class files
      *
-     * @param  string  $classDir the dir to be scaned, must be an absolute path
+     * @param  string  $classDir the dir to be scand, must be an absolute path
      */
     public static function scanClassFiles(string $classDir): void
     {

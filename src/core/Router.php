@@ -14,6 +14,8 @@ use FastRoute\Dispatcher;
 use FastRoute\RouteCollector;
 use function FastRoute\simpleDispatcher;
 use herosphp\annotation\AnnotationParser;
+use herosphp\GF;
+use herosphp\utils\Log;
 
 /**
  * Router class
@@ -24,12 +26,19 @@ class Router
 {
     protected static array $_routes = [];
 
-    public static function add(string $uri, string|array $method, array $handler): void
+    public static function add(string|array $uri, string|array $method, array $handler): void
     {
-        if (isset(static::$_routes[$uri])) {
-            return;
+        // collect uri and method
+        $dispatcherUris = is_array($uri) ? $uri : [$uri];
+
+        foreach ($dispatcherUris as $dispatcherUri) {
+            if (isset(static::$_routes[$dispatcherUri])) {
+                GF::printError("uri exists: $dispatcherUri, please check your routes is right ?");
+                Log::error("uri exists: $dispatcherUri, please check your routes is right ?");
+                continue;
+            }
+            static::$_routes[$dispatcherUri] = ['uri' => $dispatcherUri, 'method' => $method, 'handler' => $handler];
         }
-        static::$_routes[$uri] = ['uri' => $uri, 'method' => $method, 'handler' => $handler];
     }
 
     public static function getDispatcher(): Dispatcher
