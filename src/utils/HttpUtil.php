@@ -29,6 +29,12 @@ class HttpUtil
     // if return the header message of response
     private bool $_return_header = false;
 
+    // 设置请求超时时间，单位是秒
+    private int $connect_time_out = 5;
+
+    // 设置请求超时时间，单位是秒
+    private int $time_out = 10;
+
     private function __construct()
     {
         $handler = curl_init();
@@ -52,6 +58,28 @@ class HttpUtil
     public function header(string $name, string $value): self
     {
         $this->_headers[$name] = $value;
+
+        return $this;
+    }
+
+    /**
+     * @param  int  $connect_time_out
+     * @return self
+     */
+    public function setConnectTimeOut(int $connect_time_out): self
+    {
+        $this->connect_time_out = $connect_time_out;
+
+        return $this;
+    }
+
+    /**
+     * @param  int  $time_out
+     * @return self
+     */
+    public function setTimeOut(int $time_out): self
+    {
+        $this->time_out = $time_out;
 
         return $this;
     }
@@ -146,6 +174,11 @@ class HttpUtil
             curl_setopt($this->_handler, CURLOPT_SSL_VERIFYPEER, false);
             curl_setopt($this->_handler, CURLOPT_SSL_VERIFYHOST, false);
         }
+
+        // 设置链接超时时间
+        curl_setopt($this->_handler, CURLOPT_CONNECTTIMEOUT, $this->connect_time_out);
+        //设置请求时间
+        curl_setopt($this->_handler, CURLOPT_TIMEOUT, $this->time_out);
 
         $ret = curl_exec($this->_handler);
         curl_close($this->_handler);

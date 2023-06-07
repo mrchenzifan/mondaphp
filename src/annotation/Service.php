@@ -20,7 +20,7 @@ use Attribute;
 #[Attribute(Attribute::TARGET_CLASS)]
 class Service
 {
-    public function __construct(public string $name, public string $desc = '')
+    public function __construct(public string $name = '', public string $desc = '')
     {
     }
 }
