@@ -161,7 +161,7 @@ class StringUtil
         $date = date('Ymd');
         // 保存redis中的key，注意不要重复
         $redisKey = 'getNo_uniqueNo_'.$date;
-        // 利用increment即redis原生incrBy命令的原子性特性生成递增的序列号
+        // 利用increment即redis原生incBy命令的原子性特性生成递增的序列号
         $increment = Redis::incrBy($redisKey, $step);
         if ($step == $increment) {
             // 首次执行时，给redisKey设置ttl，第二天这个key就可以被redis自动删除

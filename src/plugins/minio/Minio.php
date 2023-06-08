@@ -9,74 +9,148 @@ use herosphp\exception\HeroException;
 use herosphp\utils\StringUtil;
 
 /**
- * @note composer require league/flysystem-aws-s3-v3
+ * @note composer require aws/aws-sdk-php
  */
 class Minio
 {
     protected static array $_config = [];
 
-    private S3Client $s3Client;
+    protected ?S3Client $s3Client = null;
 
-    public function __construct(array $config)
+    private function __construct(array $config = [])
     {
-        if (
-            empty($config) || ! isset($config['credentials']) || ! isset($config['bucket_name'])
-        ) {
-            throw new HeroException('Invalid upload configs');
-        }
+        static::$_config = array_merge(config('minio', []), $config);
 
-        if (! class_exists(S3Client::class)) {
-            throw new HeroException('Please run "composer install league/flysystem-aws-s3-v3:^3.0"');
+        if (! static::$_config || ! class_exists(S3Client::class)) {
+            throw new HeroException('Please run "composer install aws/aws-sdk-php" or configure minio file requirement');
         }
         //init s3 driver
-        $client = new S3Client($config);
+        $client = new S3Client(static::$_config);
         $this->s3Client = $client;
-        static::$_config = $config;
     }
 
     /**
+     * 初始化实例
+     *
+     * @param  array  $config
+     * @return self
+     */
+    public static function newInstance(array $config = []): self
+    {
+        return new self($config);
+    }
+
+    /**
+     * 上传
+     *
      * @param  UploadFile  $uploadFile
      * @return string
      */
     public function save(UploadFile $uploadFile): string
     {
-        $dstFile = date('Y/m/d/').StringUtil::genGlobalUid().'.'.$uploadFile->getUploadExtension();
-        $this->s3Client->putObject([
-            'Bucket' => static::$_config['bucket_name'],
-            'Key' => $dstFile,
-            'SourceFile' => $uploadFile->getPathname(),
-            'ContentType' => MimeType::fromFilename($uploadFile->getUploadName()) ?: 'application/octet-stream',
-        ]);
-
-        return $dstFile;
+        return $this->putObject($uploadFile->getUploadName(), $uploadFile->getPathname());
     }
 
     /**
-     * @param  string  $dstFilePath  绝对路径
+     * @param  string  $dstFilePath
      * @return string
      */
     public function saveFile(string $dstFilePath): string
     {
-        $dstFile = date('Y/m/d/').StringUtil::genGlobalUid().'.'.pathinfo($dstFilePath)['extension'];
-        $this->s3Client->putObject([
-            'Bucket' => static::$_config['bucket_name'],
-            'Key' => $dstFile,
-            'SourceFile' => $dstFilePath,
-            'ContentType' => MimeType::fromFilename($dstFilePath) ?: 'application/octet-stream',
-        ]);
+        return $this->putObject(pathinfo($dstFilePath)['basename'], $dstFilePath);
+    }
 
-        return $dstFile;
+    public function delete(string $key): Result
+    {
+        $key = $this->formatStorageSavePath($key);
+
+        return $this->s3Client->deleteObject(['Bucket' => static::$_config['bucket_name'], 'Key' => $key]);
+    }
+
+    public function getPlainUrl(string $key): string
+    {
+        return $this->s3Client->getObjectUrl(static::$_config['bucket_name'], $key);
+    }
+
+    public function getPreSigned(string $key, int $minutes = 10): string
+    {
+        // Get a command object from the client
+        $command = $this->s3Client->getCommand('GetObject', [
+            'Bucket' => static::$_config['bucket_name'],
+            'Key' => $key,
+        ]);
+        // Create a pre-signed URL for a request with duration of 10 minutes
+        $preSignedRequest = $this->s3Client->createPresignedRequest($command, "+{$minutes} minutes");
+        // Get the actual preSigned-url
+        return (string) $preSignedRequest->getUri();
     }
 
     /**
-     * @param  string  $filename
      * @return Result
      */
-    public function delete(string $filename): Result
+    public function createBucket(): Result
     {
-        $dstFile = $this->formatStorageSavePath($filename);
+        if (empty(static::$_config['bucket_name'])) {
+            throw new \RuntimeException('config bucket name is empty');
+        }
 
-        return $this->s3Client->deleteObject(['Bucket' => static::$_config['bucket_name'], 'Key' => $dstFile]);
+        return $this->s3Client->createBucket(['bucket_name' => static::$_config['bucket_name']]);
+    }
+
+    private function putObject(string $fileName, string $sourceFile): string
+    {
+        if (! file_exists($sourceFile)) {
+            throw new \RuntimeException('File does not exist');
+        }
+        $key = date('Y/m/d/').StringUtil::genGlobalUid().'.'.pathinfo($fileName)['extension'];
+        $this->s3Client->putObject([
+            'Bucket' => static::$_config['bucket_name'],
+            'Key' => $key,
+            'SourceFile' => $sourceFile,
+            'ContentType' => MimeType::fromFilename($fileName) ?: 'application/octet-stream',
+        ]);
+
+        return $key;
+    }
+
+    /**
+     * Get the policy of a specific bucket
+     *
+     * @return string
+     */
+    public function getBucketPolicy(): string
+    {
+        $resp = $this->s3Client->getBucketPolicy([
+            'Bucket' => static::$_config['bucket_name'],
+        ]);
+
+        return (string) $resp->get('Policy');
+    }
+
+    /**
+     * Deletes the policy from the bucket
+     *
+     * @return void
+     */
+    public function deleteBucketPolicy(): void
+    {
+        $this->s3Client->deleteBucketPolicy([
+            'Bucket' => static::$_config['bucket_name'],
+        ]);
+    }
+
+    /**
+     * replace a policy on the bucket
+     *
+     * @param  string  $policy
+     * @return void
+     */
+    public function putBucketPolicy(string $policy): void
+    {
+        $this->s3Client->putBucketPolicy([
+            'Bucket' => static::$_config['bucket_name'],
+            'Policy' => $policy,
+        ]);
     }
 
     /**
@@ -85,419 +159,18 @@ class Minio
      * @param  string  $storageSavePath
      * @return string
      */
-    protected function formatStorageSavePath(string $storageSavePath): string
+    private function formatStorageSavePath(string $storageSavePath): string
     {
         return trim($storageSavePath, '/');
     }
 
     /**
-     * @note 设置策略，会覆盖原来设置的!
+     * all readers and writers
      *
-     * @param  string  $bucket
-     * @param  array  $policies
-     * $policies = [
-     *   'read' => ['read1', 'read2'], //只读
-     *   'write' => ['write1', 'write2'],  //只写
-     *   'read+write' => ['readwrite1', 'rw'] // 读+写
-     *   ];
-     * @return Result
-     */
-    protected function setBucketPolicies(string $bucket, array $policies = []): Result
-    {
-        $policyString = $this->getPolicyString($policies, $bucket);
-
-        return $this->s3Client->putBucketPolicy(['Bucket' => $bucket, 'Policy' => $policyString]);
-    }
-
-    /**
-     * 生成policy设置字符串
-     *
-     * @param $policies
-     * @param $bucket
      * @return string
      */
-    protected function getPolicyString($policies, $bucket): string
+    public function getReadAndWriteForAll(): string
     {
-        $policy_types = array_keys($policies);
-        sort($policy_types);
-        $policy_types = implode('&', $policy_types);
-        switch ($policy_types) {
-            case 'read':
-                $paths = $policies['read'];
-                $prefix_string = '"'.implode('","', $paths).'"';
-                $resource = '"'
-                    .implode(
-                        '","',
-                        array_map(static function ($path) use ($bucket) {
-                            return "arn:aws:s3:::$bucket/$path*";
-                        }, $paths)
-                    )
-                    .'"';
-                $str = <<<STR
-{
-	"Version": "2012-10-17",
-	"Statement": [{
-		"Effect": "Allow",
-		"Principal": {
-			"AWS": ["*"]
-		},
-		"Action": ["s3:GetBucketLocation"],
-		"Resource": ["arn:aws:s3:::$bucket"]
-	}, {
-		"Effect": "Allow",
-		"Principal": {
-			"AWS": ["*"]
-		},
-		"Action": ["s3:ListBucket"],
-		"Resource": ["arn:aws:s3:::$bucket"],
-		"Condition": {
-			"StringEquals": {
-				"s3:prefix": [$prefix_string]
-			}
-		}
-	}, {
-		"Effect": "Allow",
-		"Principal": {
-			"AWS": ["*"]
-		},
-		"Action": ["s3:GetObject"],
-		"Resource": [$resource]
-	}]
-}
-STR;
-                break;
-            case 'write':
-                $paths = $policies['write'];
-                $resource = '"'
-                    .implode(
-                        '","',
-                        array_map(static function ($path) use ($bucket) {
-                            return "arn:aws:s3:::$bucket/$path*";
-                        }, $paths)
-                    )
-                    .'"';
-                $str = <<<STR
-{
-	"Version": "2012-10-17",
-	"Statement": [{
-		"Effect": "Allow",
-		"Principal": {
-			"AWS": ["*"]
-		},
-		"Action": ["s3:GetBucketLocation", "s3:ListBucketMultipartUploads"],
-		"Resource": ["arn:aws:s3:::$bucket"]
-	}, {
-		"Effect": "Allow",
-		"Principal": {
-			"AWS": ["*"]
-		},
-		"Action": ["s3:AbortMultipartUpload", "s3:DeleteObject", "s3:ListMultipartUploadParts", "s3:PutObject"],
-		"Resource": [$resource]
-	}]
-}
-STR;
-
-                break;
-            case 'read+write':
-                $paths = $policies['read+write'];
-                $prefix_string = '"'.implode('","', $paths).'"';
-                $resource = '"'
-                    .implode(
-                        '","',
-                        array_map(static function ($path) use ($bucket) {
-                            return "arn:aws:s3:::$bucket/$path*";
-                        }, $paths)
-                    )
-                    .'"';
-                $str = <<<STR
-{
-	"Version": "2012-10-17",
-	"Statement": [{
-		"Effect": "Allow",
-		"Principal": {
-			"AWS": ["*"]
-		},
-		"Action": ["s3:GetBucketLocation", "s3:ListBucketMultipartUploads"],
-		"Resource": ["arn:aws:s3:::$bucket"]
-	}, {
-		"Effect": "Allow",
-		"Principal": {
-			"AWS": ["*"]
-		},
-		"Action": ["s3:ListBucket"],
-		"Resource": ["arn:aws:s3:::$bucket"],
-		"Condition": {
-			"StringEquals": {
-				"s3:prefix": [$prefix_string]
-			}
-		}
-	}, {
-		"Effect": "Allow",
-		"Principal": {
-			"AWS": ["*"]
-		},
-		"Action": ["s3:GetObject", "s3:ListMultipartUploadParts", "s3:PutObject", "s3:AbortMultipartUpload", "s3:DeleteObject"],
-		"Resource": [$resource]
-	}]
-}
-STR;
-                break;
-            case 'read&read+write':
-                $prefix_string = '"'.implode('","', array_merge($policies['read'], $policies['read+write'])).'"';
-                $all_resource = '"'
-                    .implode(
-                        '","',
-                        array_map(static function ($path) use ($bucket) {
-                            return "arn:aws:s3:::$bucket/$path*";
-                        }, $policies['read+write'])
-                    )
-                    .'"';
-                $read_resource = '"'
-                    .implode(
-                        '","',
-                        array_map(static function ($path) use ($bucket) {
-                            return "arn:aws:s3:::$bucket/$path*";
-                        }, $policies['read'])
-                    )
-                    .'"';
-                $str = <<<STR
-{
-	"Version": "2012-10-17",
-	"Statement": [{
-		"Effect": "Allow",
-		"Principal": {
-			"AWS": ["*"]
-		},
-		"Action": ["s3:GetBucketLocation", "s3:ListBucketMultipartUploads"],
-		"Resource": ["arn:aws:s3:::$bucket"]
-	}, {
-		"Effect": "Allow",
-		"Principal": {
-			"AWS": ["*"]
-		},
-		"Action": ["s3:ListBucket"],
-		"Resource": ["arn:aws:s3:::$bucket"],
-		"Condition": {
-			"StringEquals": {
-				"s3:prefix": [$prefix_string]
-			}
-		}
-	}, {
-		"Effect": "Allow",
-		"Principal": {
-			"AWS": ["*"]
-		},
-		"Action": ["s3:AbortMultipartUpload", "s3:DeleteObject", "s3:GetObject", "s3:ListMultipartUploadParts", "s3:PutObject"],
-		"Resource": [$all_resource]
-	}, {
-		"Effect": "Allow",
-		"Principal": {
-			"AWS": ["*"]
-		},
-		"Action": ["s3:GetObject"],
-		"Resource": [$read_resource]
-	}]
-}
-STR;
-
-                break;
-            case 'read+write&write':
-                $prefix_string = '"'.implode('","', array_merge($policies['read'], $policies['read+write'])).'"';
-                $all_resource = '"'
-                    .implode(
-                        '","',
-                        array_map(static function ($path) use ($bucket) {
-                            return "arn:aws:s3:::$bucket/$path*";
-                        }, $policies['read+write'])
-                    )
-                    .'"';
-                $read_resource = '"'
-                    .implode(
-                        '","',
-                        array_map(static function ($path) use ($bucket) {
-                            return "arn:aws:s3:::$bucket/$path*";
-                        }, $policies['read'])
-                    )
-                    .'"';
-
-                $str = <<<STR
-{
-	"Version": "2012-10-17",
-	"Statement": [{
-		"Effect": "Allow",
-		"Principal": {
-			"AWS": ["*"]
-		},
-		"Action": ["s3:GetBucketLocation", "s3:ListBucket", "s3:ListBucketMultipartUploads"],
-		"Resource": ["arn:aws:s3:::$bucket"]
-	}, {
-		"Effect": "Allow",
-		"Principal": {
-			"AWS": ["*"]
-		},
-		"Action": ["s3:ListBucket"],
-		"Resource": ["arn:aws:s3:::$bucket"],
-		"Condition": {
-			"StringEquals": {
-				"s3:prefix": [$prefix_string]
-			}
-		}
-	}, {
-		"Effect": "Allow",
-		"Principal": {
-			"AWS": ["*"]
-		},
-		"Action": ["s3:GetObject"],
-		"Resource": [$read_resource]
-	}, {
-		"Effect": "Allow",
-		"Principal": {
-			"AWS": ["*"]
-		},
-		"Action": ["s3:AbortMultipartUpload", "s3:DeleteObject", "s3:ListMultipartUploadParts", "s3:PutObject"],
-		"Resource": [$all_resource]
-	}]
-}
-STR;
-
-                break;
-            case 'read&write':
-                $prefix_string = '"'.implode('","', $policies['read']).'"';
-
-                $read_resource = '"'
-                    .implode(
-                        '","',
-                        array_map(static function ($path) use ($bucket) {
-                            return "arn:aws:s3:::$bucket/$path*";
-                        }, $policies['read'])
-                    )
-                    .'"';
-                $write_resource = '"'
-                    .implode(
-                        '","',
-                        array_map(static function ($path) use ($bucket) {
-                            return "arn:aws:s3:::$bucket/$path*";
-                        }, $policies['write'])
-                    )
-                    .'"';
-                $str = <<<STR
-{
-	"Version": "2012-10-17",
-	"Statement": [{
-		"Effect": "Allow",
-		"Principal": {
-			"AWS": ["*"]
-		},
-		"Action": ["s3:ListBucketMultipartUploads", "s3:GetBucketLocation", "s3:ListBucket"],
-		"Resource": ["arn:aws:s3:::$bucket"]
-	}, {
-		"Effect": "Allow",
-		"Principal": {
-			"AWS": ["*"]
-		},
-		"Action": ["s3:ListBucket"],
-		"Resource": ["arn:aws:s3:::$bucket"],
-		"Condition": {
-			"StringEquals": {
-				"s3:prefix": [$prefix_string]
-			}
-		}
-	}, {
-		"Effect": "Allow",
-		"Principal": {
-			"AWS": ["*"]
-		},
-		"Action": ["s3:GetObject"],
-		"Resource": [$read_resource]
-	}, {
-		"Effect": "Allow",
-		"Principal": {
-			"AWS": ["*"]
-		},
-		"Action": ["s3:PutObject", "s3:AbortMultipartUpload", "s3:DeleteObject", "s3:ListMultipartUploadParts"],
-		"Resource": [$write_resource]
-	}]
-}
-STR;
-                break;
-            case 'read&read+write&write':
-                $prefix_string = '"'.implode('","', array_merge($policies['read'], $policies['read+write'])).'"';
-                $all_resource = '"'
-                    .implode(
-                        '","',
-                        array_map(function ($path) use ($bucket) {
-                            return "arn:aws:s3:::$bucket/$path*";
-                        }, $policies['read+write'])
-                    )
-                    .'"';
-                $read_resource = '"'
-                    .implode(
-                        '","',
-                        array_map(function ($path) use ($bucket) {
-                            return "arn:aws:s3:::$bucket/$path*";
-                        }, $policies['read'])
-                    )
-                    .'"';
-                $write_resource = '"'
-                    .implode(
-                        '","',
-                        array_map(function ($path) use ($bucket) {
-                            return "arn:aws:s3:::$bucket/$path*";
-                        }, $policies['write'])
-                    )
-                    .'"';
-                $str = <<<STR
-{
-	"Version": "2012-10-17",
-	"Statement": [{
-		"Effect": "Allow",
-		"Principal": {
-			"AWS": ["*"]
-		},
-		"Action": ["s3:GetBucketLocation", "s3:ListBucket", "s3:ListBucketMultipartUploads"],
-		"Resource": ["arn:aws:s3:::$bucket"]
-	}, {
-		"Effect": "Allow",
-		"Principal": {
-			"AWS": ["*"]
-		},
-		"Action": ["s3:ListBucket"],
-		"Resource": ["arn:aws:s3:::$bucket"],
-		"Condition": {
-			"StringEquals": {
-				"s3:prefix": [$prefix_string]
-			}
-		}
-	}, {
-		"Effect": "Allow",
-		"Principal": {
-			"AWS": ["*"]
-		},
-		"Action": ["s3:DeleteObject", "s3:GetObject", "s3:ListMultipartUploadParts", "s3:PutObject", "s3:AbortMultipartUpload"],
-		"Resource": [$all_resource]
-	}, {
-		"Effect": "Allow",
-		"Principal": {
-			"AWS": ["*"]
-		},
-		"Action": ["s3:GetObject"],
-		"Resource": [$read_resource]
-	}, {
-		"Effect": "Allow",
-		"Principal": {
-			"AWS": ["*"]
-		},
-		"Action": ["s3:AbortMultipartUpload", "s3:DeleteObject", "s3:ListMultipartUploadParts", "s3:PutObject"],
-		"Resource": [$write_resource]
-	}]
-}
-STR;
-                break;
-            default:
-                $str = '';
-                break;
-        }
-
-        return $str;
+        return '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"AWS":["*"]},"Action":["s3:GetBucketLocation","s3:ListBucket","s3:ListBucketMultipartUploads"],"Resource":["arn:aws:s3:::'.static::$_config['bucket_name'].'"]},{"Effect":"Allow","Principal":{"AWS":["*"]},"Action":["s3:AbortMultipartUpload","s3:DeleteObject","s3:GetObject","s3:ListMultipartUploadParts","s3:PutObject"],"Resource":["arn:aws:s3:::'.static::$_config['bucket_name'].'/*"]}]}';
     }
 }
