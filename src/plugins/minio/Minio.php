@@ -7,13 +7,16 @@ use Aws\S3\S3Client;
 use herosphp\core\UploadFile;
 use herosphp\exception\HeroException;
 use herosphp\utils\StringUtil;
+use RuntimeException;
 
 /**
  * @note composer require aws/aws-sdk-php
  */
 class Minio
 {
-    protected static array $_config = [];
+    protected static array $_config = [
+        'allow_ext' => 'jpg|jpeg|png|gif|txt|pdf|rar|zip|swf|bmp|mp3',
+    ];
 
     protected ?S3Client $s3Client = null;
 
@@ -91,7 +94,7 @@ class Minio
     public function createBucket(): Result
     {
         if (empty(static::$_config['bucket_name'])) {
-            throw new \RuntimeException('config bucket name is empty');
+            throw new RuntimeException('config bucket name is empty');
         }
 
         return $this->s3Client->createBucket(['bucket_name' => static::$_config['bucket_name']]);
@@ -100,7 +103,11 @@ class Minio
     private function putObject(string $fileName, string $sourceFile): string
     {
         if (! file_exists($sourceFile)) {
-            throw new \RuntimeException('File does not exist');
+            throw new RuntimeException('File does not exist');
+        }
+        $ext = strtolower(pathinfo($fileName)['extension']);
+        if (! in_array($ext, explode('|', static::$_config['allow_ext']))) {
+            throw new RuntimeException('Invalid extension');
         }
         $key = date('Y/m/d/').StringUtil::genGlobalUid().'.'.pathinfo($fileName)['extension'];
         $this->s3Client->putObject([

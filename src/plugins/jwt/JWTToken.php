@@ -1,11 +1,11 @@
 <?php
+
 declare(strict_types=1);
 
 namespace herosphp\plugins\jwt;
 
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
-
 
 /**
  * @note composer install "firebase/php-jwt"
