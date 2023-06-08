@@ -15,6 +15,7 @@
         "ext-openssl": "*",
         "ext-redis": "*",
         "doctrine/inflector": "^2.0",
+        "firebase/php-jwt": "^6.5",
         "illuminate/database": "^10.0",
         "illuminate/events": "^10.0",
         "illuminate/pagination": "^10.0",
