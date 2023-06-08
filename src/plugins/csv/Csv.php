@@ -34,7 +34,9 @@ class Csv implements ExportInterface
         foreach ($data as $item) {
             $regData = [];
             foreach ($item as $v) {
-                $v = static::filterSpecialValue((string) $v);
+                if (!is_float($v) && !is_double($v) && !is_int($v)) {
+                    $v = static::filterSpecialValue((string) $v);
+                }
                 $regData[] = $v;
             }
             $this->connection->send(implode(',', $regData)."\n", true);
