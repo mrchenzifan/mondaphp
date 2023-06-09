@@ -15,16 +15,20 @@ use RuntimeException;
 class Minio
 {
     protected static array $_config = [
-        'allow_ext' => 'jpg|jpeg|png|gif|txt|pdf|rar|zip|swf|bmp|mp3',
+        // Allowed file extension
+        'allow_ext' => 'jpg|jpeg|png|gif|txt|pdf|rar|zip|swf|bmp|c|java|mp3',
+        // Allowed max file size, default value is  10MiB,
+        // if no limits, set it to 0, default: 10MiB
+        'max_size' => 10 * 1024 * 1024,
     ];
 
     protected ?S3Client $s3Client = null;
 
     private function __construct(array $config = [])
     {
-        static::$_config = array_merge(config('minio', []), $config);
+        static::$_config = array_merge(static::$_config, config('minio', []), $config);
 
-        if (! static::$_config || ! class_exists(S3Client::class)) {
+        if (!static::$_config || !class_exists(S3Client::class)) {
             throw new HeroException('Please run "composer install aws/aws-sdk-php" or configure minio file requirement');
         }
         //init s3 driver
@@ -102,13 +106,22 @@ class Minio
 
     private function putObject(string $fileName, string $sourceFile): string
     {
-        if (! file_exists($sourceFile)) {
+        // 检查文件是否存在
+        if (!file_exists($sourceFile)) {
             throw new RuntimeException('File does not exist');
         }
+
+        // 检查后缀
         $ext = strtolower(pathinfo($fileName)['extension']);
-        if (! in_array($ext, explode('|', static::$_config['allow_ext']))) {
+        if (!in_array($ext, explode('|', static::$_config['allow_ext']))) {
             throw new RuntimeException('Invalid extension');
         }
+
+        // 检查文件大小
+        if (!$this->_checkFileSize($sourceFile)) {
+            throw new RuntimeException("file size is not valid");
+        }
+
         $key = date('Y/m/d/').StringUtil::genGlobalUid().'.'.pathinfo($fileName)['extension'];
         $this->s3Client->putObject([
             'Bucket' => static::$_config['bucket_name'],
@@ -179,5 +192,19 @@ class Minio
     public function getReadAndWriteForAll(): string
     {
         return '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"AWS":["*"]},"Action":["s3:GetBucketLocation","s3:ListBucket","s3:ListBucketMultipartUploads"],"Resource":["arn:aws:s3:::'.static::$_config['bucket_name'].'"]},{"Effect":"Allow","Principal":{"AWS":["*"]},"Action":["s3:AbortMultipartUpload","s3:DeleteObject","s3:GetObject","s3:ListMultipartUploadParts","s3:PutObject"],"Resource":["arn:aws:s3:::'.static::$_config['bucket_name'].'/*"]}]}';
+    }
+
+
+    // check file size
+    protected function _checkFileSize(string $path): bool
+    {
+        // no limit
+        if (static::$_config['max_size'] === 0) {
+            return true;
+        }
+        if (filesize($path) > static::$_config['max_size']) {
+            return false;
+        }
+        return true;
     }
 }
