@@ -24,6 +24,7 @@ use herosphp\exception\MethodNotAllowedException;
 use herosphp\exception\NoFoundException;
 use herosphp\exception\RouterException;
 use herosphp\utils\Log;
+use herosphp\utils\ModelTransformUtils;
 use herosphp\utils\StringUtil;
 use ReflectionMethod;
 use ReflectionParameter;
@@ -241,9 +242,8 @@ class WebApp
                 $params[] = match ($attr->getName()) {
                     //name required
                     RequestPath::class => $pathParams[$attr->getArguments()['name']],
-                    RequestParam::class => static::$request->getParameter($attr->getArguments()['name'],
-                        $attr->getArguments()['default'] ?? ''),
-                    RequestBody::class => StringUtil::jsonEncode(static::$request->post()),
+                    RequestParam::class => static::$request->getParameter($attr->getArguments()['name'], $attr->getArguments()['default'] ?? ''),
+                    RequestBody::class => !isset($attr->getArguments()['class'])  ? StringUtil::jsonEncode(static::$request->post()) : ModelTransformUtils::map2model($attr->getArguments()['class'], static::$request->post()),
                     default => null,
                 };
             } else {
@@ -264,10 +264,10 @@ class WebApp
     public static function getPublicFile(string $path): string
     {
         $file = \realpath(PUBLIC_PATH.$path);
-        if (! $file) {
+        if (!$file) {
             return '';
         }
-        if (! str_starts_with($file, PUBLIC_PATH)) {
+        if (!str_starts_with($file, PUBLIC_PATH)) {
             return '';
         }
         if (false === \is_file($file)) {
@@ -284,7 +284,7 @@ class WebApp
     public static function notModifiedSince(string $file): bool
     {
         $ifModifiedSince = self::$request->header('if-modified-since');
-        if ($ifModifiedSince === null || ! ($mtime = \filemtime($file))) {
+        if ($ifModifiedSince === null || !($mtime = \filemtime($file))) {
             return false;
         }
 
