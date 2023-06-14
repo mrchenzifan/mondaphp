@@ -4,6 +4,7 @@ namespace herosphp\utils;
 
 use herosphp\exception\HeroException;
 use ReflectionClass;
+use ReflectionException;
 
 /**
  * 模型转换工具
@@ -54,7 +55,7 @@ class ModelTransformUtils
         $map = [];
         foreach ($properties as $value) {
             // 过滤尚未init var
-            if (!$value->isInitialized($model)) {
+            if (! $value->isInitialized($model)) {
                 continue;
             }
             $property = $value->getName();
@@ -85,11 +86,40 @@ class ModelTransformUtils
             if (is_array($result)) {
                 $result = static::filterNull($item);
             }
-            if (!is_null($result)) {
+            if (! is_null($result)) {
                 $resultArr[$k] = $result;
             }
         }
 
         return $resultArr;
+    }
+
+    /**
+     * 将参数转成Vo对象
+     *
+     * @param  string|null  $className
+     * @param  array  $params
+     * @return object
+     *
+     * @throws ReflectionException
+     */
+    public static function tryParseArray2Obj(?string $className, array $params = []): object
+    {
+        if (is_null($className) || ! class_exists($className)) {
+            throw new ReflectionException('try params parameters to VO ,but no class not found !');
+        }
+        $reflectionClass = new ReflectionClass($className);
+        $newInstance = $reflectionClass->newInstance();
+        foreach ($reflectionClass->getProperties() as $property) {
+            if (! isset($params[$property->getName()])) {
+                if ($property->hasDefaultValue()) {
+                    $property->setValue($newInstance, $property->getDefaultValue());
+                }
+                continue;
+            }
+            $property->setValue($newInstance, $params[$property->getName()]);
+        }
+
+        return $newInstance;
     }
 }

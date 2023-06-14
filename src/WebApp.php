@@ -15,6 +15,7 @@ use herosphp\annotation\AnnotationParser;
 use herosphp\annotation\RequestBody;
 use herosphp\annotation\RequestParam;
 use herosphp\annotation\RequestPath;
+use herosphp\annotation\RequestVo;
 use herosphp\core\BeanContainer;
 use herosphp\core\HttpRequest;
 use herosphp\core\HttpResponse;
@@ -228,6 +229,7 @@ class WebApp
      * @return array
      *
      * @throws \ReflectionException
+     * @throws \Exception
      */
     public static function matchRequestParams(array $pathParams): array
     {
@@ -240,10 +242,13 @@ class WebApp
             if ($attributes) {
                 $attr = $attributes[0];
                 $params[] = match ($attr->getName()) {
-                    //name required
+                    //request path name required
                     RequestPath::class => $pathParams[$attr->getArguments()['name']],
                     RequestParam::class => static::$request->getParameter($attr->getArguments()['name'], $attr->getArguments()['default'] ?? ''),
-                    RequestBody::class => !isset($attr->getArguments()['class'])  ? StringUtil::jsonEncode(static::$request->post()) : ModelTransformUtils::map2model($attr->getArguments()['class'], static::$request->post()),
+                    // will return json string
+                    RequestBody::class => StringUtil::jsonEncode(static::$request->post()) ,
+                    // parse request param to vo, if class is null , will return stdClass
+                    RequestVo::class => ModelTransformUtils::tryParseArray2Obj($parameter->getType()?->getName(), static::$request->all()),
                     default => null,
                 };
             } else {
@@ -264,10 +269,10 @@ class WebApp
     public static function getPublicFile(string $path): string
     {
         $file = \realpath(PUBLIC_PATH.$path);
-        if (!$file) {
+        if (! $file) {
             return '';
         }
-        if (!str_starts_with($file, PUBLIC_PATH)) {
+        if (! str_starts_with($file, PUBLIC_PATH)) {
             return '';
         }
         if (false === \is_file($file)) {
@@ -284,7 +289,7 @@ class WebApp
     public static function notModifiedSince(string $file): bool
     {
         $ifModifiedSince = self::$request->header('if-modified-since');
-        if ($ifModifiedSince === null || !($mtime = \filemtime($file))) {
+        if ($ifModifiedSince === null || ! ($mtime = \filemtime($file))) {
             return false;
         }
 

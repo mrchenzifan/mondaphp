@@ -28,7 +28,7 @@ class Minio
     {
         static::$_config = array_merge(static::$_config, config('minio', []), $config);
 
-        if (!static::$_config || !class_exists(S3Client::class)) {
+        if (! static::$_config || ! class_exists(S3Client::class)) {
             throw new HeroException('Please run "composer install aws/aws-sdk-php" or configure minio file requirement');
         }
         //init s3 driver
@@ -107,19 +107,19 @@ class Minio
     private function putObject(string $fileName, string $sourceFile): string
     {
         // 检查文件是否存在
-        if (!file_exists($sourceFile)) {
+        if (! file_exists($sourceFile)) {
             throw new RuntimeException('File does not exist');
         }
 
         // 检查后缀
         $ext = strtolower(pathinfo($fileName)['extension']);
-        if (!in_array($ext, explode('|', static::$_config['allow_ext']))) {
+        if (! in_array($ext, explode('|', static::$_config['allow_ext']))) {
             throw new RuntimeException('Invalid extension');
         }
 
         // 检查文件大小
-        if (!$this->_checkFileSize($sourceFile)) {
-            throw new RuntimeException("file size is not valid");
+        if (! $this->_checkFileSize($sourceFile)) {
+            throw new RuntimeException('file size is not valid');
         }
 
         $key = date('Y/m/d/').StringUtil::genGlobalUid().'.'.pathinfo($fileName)['extension'];
@@ -194,7 +194,6 @@ class Minio
         return '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"AWS":["*"]},"Action":["s3:GetBucketLocation","s3:ListBucket","s3:ListBucketMultipartUploads"],"Resource":["arn:aws:s3:::'.static::$_config['bucket_name'].'"]},{"Effect":"Allow","Principal":{"AWS":["*"]},"Action":["s3:AbortMultipartUpload","s3:DeleteObject","s3:GetObject","s3:ListMultipartUploadParts","s3:PutObject"],"Resource":["arn:aws:s3:::'.static::$_config['bucket_name'].'/*"]}]}';
     }
 
-
     // check file size
     protected function _checkFileSize(string $path): bool
     {
@@ -205,6 +204,7 @@ class Minio
         if (filesize($path) > static::$_config['max_size']) {
             return false;
         }
+
         return true;
     }
 }

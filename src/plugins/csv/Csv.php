@@ -34,7 +34,7 @@ class Csv implements ExportInterface
         foreach ($data as $item) {
             $regData = [];
             foreach ($item as $v) {
-                if (!is_numeric($v)) {
+                if (! is_numeric($v)) {
                     $v = static::filterSpecialValue((string) $v);
                 }
                 $regData[] = $v;
