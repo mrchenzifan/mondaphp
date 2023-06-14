@@ -53,6 +53,10 @@ class ModelTransformUtils
         $properties = $refClass->getProperties();
         $map = [];
         foreach ($properties as $value) {
+            // 过滤尚未init var
+            if (!$value->isInitialized($model)) {
+                continue;
+            }
             $property = $value->getName();
             if (strpos($property, '_')) {
                 $property = StringUtil::ul2hump($property); //转换成驼锋格式
@@ -81,7 +85,7 @@ class ModelTransformUtils
             if (is_array($result)) {
                 $result = static::filterNull($item);
             }
-            if (! is_null($result)) {
+            if (!is_null($result)) {
                 $resultArr[$k] = $result;
             }
         }
