@@ -100,9 +100,9 @@ class WebApp
         Worker::$stdoutFile = static::$_config['stdout_file'];
         Worker::$logFile = static::$_config['log_file'];
         Worker::$eventLoopClass = static::$_config['event_loop'] ?? '';
-        TcpConnection::$defaultMaxPackageSize = $config['max_package_size'] ?? 10 * 1024 * 1024;
+        TcpConnection::$defaultMaxPackageSize = static::$_config['max_package_size'] ?? 10 * 1024 * 1024;
         if (property_exists(Worker::class, 'statusFile')) {
-            Worker::$statusFile = $config['status_file'] ?? '';
+            Worker::$statusFile = static::$_config['status_file'] ?? '';
         }
         Worker::$onMasterReload = static function () {
             if (function_exists('opcache_get_status') && function_exists('opcache_invalidate')) {
