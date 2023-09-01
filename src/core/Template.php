@@ -79,11 +79,13 @@ class Template
 
         /*
          * {run}标签： 执行php表达式
-         * {saleEcho}标签： isset后判断输出模板
+         * {safeEcho}标签： isset后判断输出模板
          * {date}标签：根据时间戳输出格式化日期
          * {cut}标签：裁剪字指定长度的字符串,注意截取的格式是UTF-8,多余的字符会用...表示
          */
         '/{run\s+(.*?)}/i' => '<?php ${1} ?>',
+        '/{safeEcho\s+(.*?)}/i' => '<?php if(isset(${1})) echo ${1} ?>',
+        // 历史代码
         '/{saleEcho\s+(.*?)}/i' => '<?php if(isset(${1})) echo ${1} ?>',
         '/{date\s+(.*?)(\s+(.*?))?}/i' => '<?php echo \herosphp\core\Template::getDate(${1}, "${2}") ?>',
         '/{cut\s+(.*?)(\s+(.*?))?}/i' => '<?php echo \herosphp\core\Template::cutString("${1}", "${2}") ?>',
