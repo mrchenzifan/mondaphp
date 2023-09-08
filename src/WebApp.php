@@ -171,6 +171,7 @@ class WebApp
                         } else {
                             static::send((new HttpResponse)->withFile($file));
                         }
+                        return;
                     }
                     throw new NoFoundException("path not found:{$request->path()}.");
                 case Dispatcher::METHOD_NOT_ALLOWED:
@@ -244,11 +245,13 @@ class WebApp
                 $params[] = match ($attr->getName()) {
                     //request path name required
                     RequestPath::class => $pathParams[$attr->getArguments()['name']],
-                    RequestParam::class => static::$request->getParameter($attr->getArguments()['name'], $attr->getArguments()['default'] ?? ''),
+                    RequestParam::class => static::$request->getParameter($attr->getArguments()['name'],
+                        $attr->getArguments()['default'] ?? ''),
                     // will return json string
-                    RequestBody::class => StringUtil::jsonEncode(static::$request->post()) ,
+                    RequestBody::class => StringUtil::jsonEncode(static::$request->post()),
                     // parse request param to vo, if class is null , will return stdClass
-                    RequestVo::class => ModelTransformUtils::tryParseArray2Obj($parameter->getType()?->getName(), static::$request->all()),
+                    RequestVo::class => ModelTransformUtils::tryParseArray2Obj($parameter->getType()?->getName(),
+                        static::$request->all()),
                     default => null,
                 };
             } else {
@@ -269,10 +272,10 @@ class WebApp
     public static function getPublicFile(string $path): string
     {
         $file = \realpath(PUBLIC_PATH.$path);
-        if (! $file) {
+        if (!$file) {
             return '';
         }
-        if (! str_starts_with($file, PUBLIC_PATH)) {
+        if (!str_starts_with($file, PUBLIC_PATH)) {
             return '';
         }
         if (false === \is_file($file)) {
@@ -289,7 +292,7 @@ class WebApp
     public static function notModifiedSince(string $file): bool
     {
         $ifModifiedSince = self::$request->header('if-modified-since');
-        if ($ifModifiedSince === null || ! ($mtime = \filemtime($file))) {
+        if ($ifModifiedSince === null || !($mtime = \filemtime($file))) {
             return false;
         }
 

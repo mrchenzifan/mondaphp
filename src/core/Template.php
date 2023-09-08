@@ -85,8 +85,6 @@ class Template
          */
         '/{run\s+(.*?)}/i' => '<?php ${1} ?>',
         '/{safeEcho\s+(.*?)}/i' => '<?php if(isset(${1})) echo ${1} ?>',
-        // 历史代码
-        '/{saleEcho\s+(.*?)}/i' => '<?php if(isset(${1})) echo ${1} ?>',
         '/{date\s+(.*?)(\s+(.*?))?}/i' => '<?php echo \herosphp\core\Template::getDate(${1}, "${2}") ?>',
         '/{cut\s+(.*?)(\s+(.*?))?}/i' => '<?php echo \herosphp\core\Template::cutString("${1}", "${2}") ?>',
     ];
