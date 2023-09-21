@@ -46,7 +46,7 @@ class Template
         // array: {$array.key}
         '/{\$([0-9a-z_]{1,})\.([0-9a-z_]{1,})}/i' => '<?php echo \$${1}[\'${2}\']?>',
 
-        // two-demensional array
+        // two-dimensional array
         '/{\$([0-9a-z_]{1,})\.([0-9a-z_]{1,})\.([0-9a-z_]{1,})}/i' => '<?php echo \$${1}[\'${2}\'][\'${3}\']?>',
 
         // for loop
@@ -60,7 +60,7 @@ class Template
         // foreach ( $array as $value )
         '/{loop\s+\$(.*?)\s+\$([0-9a-z_]{1,})\s*}/i' => '<?php foreach ( \$${1} as \$${2} ) { ?>',
 
-        // expr: excute the php expression
+        // expr: execute the php expression
         // echo: print the php expression
         '/{expr\s+(.*?)}/i' => '<?php ${1} ?>',
         '/{echo\s+(.*?)}/i' => '<?php echo ${1} ?>',

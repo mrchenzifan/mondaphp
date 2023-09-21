@@ -145,7 +145,7 @@ class BeanContainer
             if (! isset($_attr->getArguments()['name']) || ! $_attr->getArguments()['name']) {
                 continue;
             }
-            $value = GF::config($_attr->getArguments()['name'], null);
+            $value = GF::config($_attr->getArguments()['name']);
             if ($property->hasType()) {
                 $propertyType = $property->getType()->getName();
                 if ($propertyType === 'int' && ! is_int($value)) {
