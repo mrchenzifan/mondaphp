@@ -250,8 +250,7 @@ class WebApp
                     // will return json string
                     RequestBody::class => StringUtil::jsonEncode(static::$request->post()),
                     // parse request param to vo, if class is null , will return stdClass
-                    RequestVo::class => ModelTransformUtils::tryParseArray2Obj($parameter->getType()?->getName(),
-                        static::$request->all()),
+                    RequestVo::class => ModelTransformUtils::map2model($parameter->getType()->getName(), static::$request->all()),
                     default => null,
                 };
             } else {
