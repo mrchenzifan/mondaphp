@@ -4,7 +4,6 @@ namespace herosphp\utils;
 
 use herosphp\exception\HeroException;
 use ReflectionClass;
-use ReflectionException;
 
 /**
  * 模型转换工具
@@ -21,9 +20,6 @@ class ModelTransformUtils
      */
     public static function map2model(string|object $class, array $map): object|null
     {
-        if (empty($map)) {
-            return null;
-        }
         if (is_string($class)) { // create object
             $refClass = new ReflectionClass($class);
             $obj = $refClass->newInstance();
@@ -55,7 +51,7 @@ class ModelTransformUtils
         $map = [];
         foreach ($properties as $value) {
             // 过滤尚未init var
-            if (! $value->isInitialized($model)) {
+            if (!$value->isInitialized($model)) {
                 continue;
             }
             $property = $value->getName();
@@ -86,7 +82,7 @@ class ModelTransformUtils
             if (is_array($result)) {
                 $result = static::filterNull($item);
             }
-            if (! is_null($result)) {
+            if (!is_null($result)) {
                 $resultArr[$k] = $result;
             }
         }
