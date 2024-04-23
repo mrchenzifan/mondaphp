@@ -43,7 +43,7 @@ class Arithmetic
     public static function init(self|float|int|string $result): self
     {
         if ($result instanceof self) {
-            return $result;
+            return clone $result;
         }
 
         return new self($result);
