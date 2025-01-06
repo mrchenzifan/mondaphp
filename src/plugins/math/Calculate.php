@@ -15,7 +15,8 @@ namespace herosphp\plugins\math;
  *       "1 + (1 - -1)" => "3",
  *       "1 + (-1 * 2) / 2" => "0",
  *       "1 + 1 * 2 * 3 / 2" => "4",
- *
+ *       "(121.000/(1+11/100)-1210.000/(1+11/100))/(121.000/(1+11/100))" => "-9",
+ *       "((121.000/(1+11/100))-(1210.000/(1+11/100)))/(121.000/(1+11/100))" => "-9",
  *   ];
  *
  *   foreach ($tests as $k => $v) {
@@ -39,6 +40,11 @@ namespace herosphp\plugins\math;
  * actual: 0.000000
  * expect: 1 + 1 * 2 * 3 / 2   => res:4
  * actual: 4.000000
+ * expect: (121.000/(1+11/100)-1210.000/(1+11/100))/(121.000/(1+11/100))   => res:-9
+ * actual: -9.0000000000
+ * expect: ((121.000/(1+11/100))-(1210.000/(1+11/100)))/(121.000/(1+11/100))   => res:-9
+ * actual: -9.0000000000
+
  */
 class Calculate
 {
@@ -78,7 +84,7 @@ class Calculate
                 if (isset($expression[$i + 1]) && $expression[$i + 1] === '-') {
                     //()-()
                     array_unshift($this->operateStack, $expression[$i]);
-                    if (! (isset($expression[$i + 2]) && $expression[$i + 2] === '(')) {
+                    if (isset($expression[$i + 2]) && $expression[$i + 2] != '(' && $expression[$i] != ')') {
                         $i = $this->readNextNumber($expression, $i + 1);
                     }
                 } elseif ($i === 0 && $expression[$i] === '-') {
