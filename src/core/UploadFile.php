@@ -18,7 +18,7 @@ class UploadFile extends File
     /**
      * @var string
      */
-    protected string $uploadMimeType;
+    protected string $uploadMineType;
 
     /**
      * @var int
@@ -30,13 +30,13 @@ class UploadFile extends File
      *
      * @param  string  $fileName
      * @param  string  $uploadName
-     * @param  string  $uploadMimeType
+     * @param  string  $uploadMineType
      * @param  int  $uploadErrorCode
      */
-    public function __construct(string $fileName, string $uploadName, string $uploadMimeType, int $uploadErrorCode)
+    public function __construct(string $fileName, string $uploadName, string $uploadMineType, int $uploadErrorCode)
     {
         $this->uploadName = $uploadName;
-        $this->uploadMimeType = $uploadMimeType;
+        $this->uploadMineType = $uploadMineType;
         $this->uploadErrorCode = $uploadErrorCode;
         parent::__construct($fileName);
     }
@@ -56,9 +56,9 @@ class UploadFile extends File
      *
      * @return string
      */
-    public function getUploadMimeType(): string
+    public function getUploadMineType(): string
     {
-        return $this->uploadMimeType;
+        return $this->uploadMineType;
     }
 
     /**
