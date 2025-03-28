@@ -44,7 +44,6 @@ namespace herosphp\plugins\math;
  * actual: -9.0000000000
  * expect: ((121.000/(1+11/100))-(1210.000/(1+11/100)))/(121.000/(1+11/100))   => res:-9
  * actual: -9.0000000000
-
  */
 class Calculate
 {

@@ -51,7 +51,7 @@ class ModelTransformUtils
         $map = [];
         foreach ($properties as $value) {
             // 过滤尚未init var
-            if (!$value->isInitialized($model)) {
+            if (! $value->isInitialized($model)) {
                 continue;
             }
             $property = $value->getName();
@@ -82,7 +82,7 @@ class ModelTransformUtils
             if (is_array($result)) {
                 $result = static::filterNull($item);
             }
-            if (!is_null($result)) {
+            if (! is_null($result)) {
                 $resultArr[$k] = $result;
             }
         }

@@ -171,6 +171,7 @@ class WebApp
                         } else {
                             static::send((new HttpResponse)->withFile($file));
                         }
+
                         return;
                     }
                     throw new NoFoundException("path not found:{$request->path()}.");
@@ -271,10 +272,10 @@ class WebApp
     public static function getPublicFile(string $path): string
     {
         $file = \realpath(PUBLIC_PATH.$path);
-        if (!$file) {
+        if (! $file) {
             return '';
         }
-        if (!str_starts_with($file, PUBLIC_PATH)) {
+        if (! str_starts_with($file, PUBLIC_PATH)) {
             return '';
         }
         if (false === \is_file($file)) {
@@ -291,7 +292,7 @@ class WebApp
     public static function notModifiedSince(string $file): bool
     {
         $ifModifiedSince = self::$request->header('if-modified-since');
-        if ($ifModifiedSince === null || !($mtime = \filemtime($file))) {
+        if ($ifModifiedSince === null || ! ($mtime = \filemtime($file))) {
             return false;
         }
 

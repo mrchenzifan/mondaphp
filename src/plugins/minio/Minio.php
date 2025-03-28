@@ -67,6 +67,42 @@ class Minio
         return $this->putObject(pathinfo($dstFilePath)['basename'], $dstFilePath);
     }
 
+    /**
+     * @Notice: 会每次覆盖
+     * 保持原文件名
+     *
+     * @param  string  $sourceFile
+     * @return string
+     */
+    public function saveFileByOriginName(string $sourceFile): string
+    {
+        $fileName = pathinfo($sourceFile)['basename'];
+        // 检查文件是否存在
+        if (! file_exists($sourceFile)) {
+            throw new RuntimeException('File does not exist');
+        }
+        // 检查后缀
+        $ext = strtolower(pathinfo($fileName)['extension']);
+        if (! in_array($ext, explode('|', static::$_config['allow_ext']))) {
+            throw new RuntimeException('Invalid extension');
+        }
+
+        // 检查文件大小
+        if (! $this->_checkFileSize($sourceFile)) {
+            throw new RuntimeException('file size is not valid');
+        }
+
+        $key = date('Y/m/d/').$fileName;
+        $this->s3Client->putObject([
+            'Bucket' => static::$_config['bucket_name'],
+            'Key' => $key,
+            'SourceFile' => $sourceFile,
+            'ContentType' => MimeType::fromFilename($fileName) ?: 'application/octet-stream',
+        ]);
+
+        return $key;
+    }
+
     public function delete(string $key): Result
     {
         $key = $this->formatStorageSavePath($key);
