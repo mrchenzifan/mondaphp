@@ -174,7 +174,7 @@ class HttpRequest extends Request
                     $item = htmlspecialchars($item);
                 }
             });
-        } else {
+        } else if (is_string($value)) {
             $value = htmlspecialchars($value);
         }
 
